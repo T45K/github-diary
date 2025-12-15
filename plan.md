@@ -19,7 +19,7 @@
   - `app/src/test/kotlin/core/time/DateFormatterTest.kt`でフォーマットと週開始(日曜)のテスト
 
 ## データ層（GitHub連携）
-- [ ] 認証トークン管理
+- [x] 認証トークン管理
   - `app/src/main/kotlin/data/auth/TokenStore.kt`でトークン保存/取得（今回は平文ファイルorメモリで簡易実装）、`app/src/main/kotlin/data/auth/AuthMode.kt`でPAT/OAuth種別
   - `app/src/main/kotlin/data/auth/TokenValidator.kt`で`GET /user`を叩いて疎通確認（401/403検知）
   - `app/src/test/kotlin/data/auth/TokenValidatorTest.kt`で疎通ロジックのモックテスト
