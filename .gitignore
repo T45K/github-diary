@@ -6,3 +6,5 @@ out/
 *.iml
 local.properties
 .DS_Store
+.kotlin/
+.output.txt

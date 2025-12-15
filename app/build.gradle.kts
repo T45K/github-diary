@@ -1,17 +1,18 @@
 plugins {
-    kotlin("jvm") version "1.9.24"
-    id("org.jetbrains.compose") version "1.6.10"
-    kotlin("plugin.serialization") version "1.9.24"
+    kotlin("jvm") version "2.3.0-RC3"
+    id("org.jetbrains.compose") version "1.10.0-rc02"
+    kotlin("plugin.serialization") version "2.3.0-RC3"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.3.0-RC2"
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(25)
 }
 
-repositories {
-    mavenCentral()
-    google()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
 }
 
 dependencies {

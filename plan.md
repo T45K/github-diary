@@ -14,7 +14,7 @@
   - `app/src/main/kotlin/core/di/ServiceLocator.kt`でシンプルDI（ViewModel／UseCase／Clientの生成管理）
   - `app/src/main/kotlin/core/model/Result.kt`など共通Result/エラー型を定義
 
-- [ ] 日付・パスのユーティリティ
+- [x] 日付・パスのユーティリティ
   - `app/src/main/kotlin/core/time/DateProvider.kt`で現在日付(JST)供給、`app/src/main/kotlin/core/time/DateFormatter.kt`で`yyyy/MM/dd (ddd)`やパス`yyyy/MM/dd/README.md`生成
   - `app/src/test/kotlin/core/time/DateFormatterTest.kt`でフォーマットと週開始(日曜)のテスト
 
