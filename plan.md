@@ -9,7 +9,7 @@
   - `app/src/main/kotlin/Main.kt`にCompose Desktopエントリポイントとウィンドウ設定を仮置き
 
 ## 共通基盤・設計方針
-- [ ] 設定・DI・定数の土台整備
+- [x] 設定・DI・定数の土台整備
   - `app/src/main/kotlin/core/AppConfig.kt`にベース設定（タイムゾーンJST、GitHub APIベースURL、デフォルトブランチ`main`）
   - `app/src/main/kotlin/core/di/ServiceLocator.kt`でシンプルDI（ViewModel／UseCase／Clientの生成管理）
   - `app/src/main/kotlin/core/model/Result.kt`など共通Result/エラー型を定義
