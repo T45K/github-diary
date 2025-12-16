@@ -36,7 +36,7 @@
   - `app/src/test/kotlin/data/repo/DiaryRepositoryTest.kt`でコンフリクト・未存在時の挙動テスト
 
 ## ドメイン・ユースケース
-- [ ] ユースケース定義
+- [x] ユースケース定義
   - `app/src/main/kotlin/domain/usecase/FetchMonthDiariesUseCase.kt`で月単位取得（不足日を判定）
   - `app/src/main/kotlin/domain/usecase/FetchDiaryUseCase.kt`で単日取得→プレビュー用Markdown返却
   - `app/src/main/kotlin/domain/usecase/SaveDiaryUseCase.kt`で保存（最新SHA取得→PUT、409時にエラー種別化）

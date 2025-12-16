@@ -9,10 +9,10 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 
-class TokenValidator(
+open class TokenValidator(
     private val client: HttpClient
 ) {
-    suspend fun validate(token: String): Result<Boolean> {
+    open suspend fun validate(token: String): Result<Boolean> {
         return runCatching {
             client.get("${AppConfig.githubApiBaseUrl}/user") {
                 header("Authorization", "token $token")
