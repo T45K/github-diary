@@ -5,13 +5,13 @@ import core.time.DateProvider
 import data.repo.DiaryRepository
 import java.time.LocalDate
 
-class FetchMonthDiariesUseCase(
+open class FetchMonthDiariesUseCase(
     private val diaryRepository: DiaryRepository,
     private val dateProvider: DateProvider
 ) {
     data class DayStatus(val date: LocalDate, val exists: Boolean)
 
-    suspend operator fun invoke(owner: String, repo: String, year: Int? = null, month: Int? = null): Result<List<DayStatus>> {
+    open suspend operator fun invoke(owner: String, repo: String, year: Int? = null, month: Int? = null): Result<List<DayStatus>> {
         val today = dateProvider.today()
         val targetYear = year ?: today.year
         val targetMonth = month ?: today.monthValue

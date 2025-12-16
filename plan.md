@@ -54,7 +54,7 @@
   - `app/src/main/kotlin/ui/settings/SettingsViewModel.kt`で保存処理と検証、401/403時の再設定要求
   - `app/src/test/kotlin/ui/settings/SettingsViewModelTest.kt`で入力検証・保存成功/失敗のテスト
 
-- [ ] カレンダーページ
+- [x] カレンダーページ
   - `app/src/main/kotlin/ui/calendar/CalendarScreen.kt`で日曜始まりカレンダー、月切替、未執筆/今日未投稿の表示、鉛筆アイコン
   - `app/src/main/kotlin/ui/calendar/CalendarViewModel.kt`で月次データ取得と今日判定、ロード/エラー管理
   - `app/src/test/kotlin/ui/calendar/CalendarViewModelTest.kt`で月切替・未設定・エラー時挙動テスト
