@@ -44,7 +44,7 @@
   - 主要ユースケースごとに`app/src/test/kotlin/domain/usecase/*Test.kt`で成功/失敗/未設定ケースを検証
 
 ## プレゼンテーション層
-- [ ] ルーティング・状態管理の骨組み
+- [x] ルーティング・状態管理の骨組み
   - `app/src/main/kotlin/ui/navigation/NavRoute.kt`で画面列挙（Calendar/Preview/Edit/Settings）
   - `app/src/main/kotlin/ui/AppViewModel.kt`でグローバル状態（選択日付、設定有無、ロード中、エラー）とナビゲーション制御
   - `app/src/main/kotlin/ui/AppScreen.kt`でScaffold（共通ヘッダー: 今日/SYNC/設定ボタン、ローディングインジケータ、トースト的エラー表示）
