@@ -24,7 +24,7 @@
   - `app/src/main/kotlin/data/auth/TokenValidator.kt`で`GET /user`を叩いて疎通確認（401/403検知）
   - `app/src/test/kotlin/data/auth/TokenValidatorTest.kt`で疎通ロジックのモックテスト
 
-- [ ] GitHub APIクライアント（REST, Ktor）
+- [x] GitHub APIクライアント（REST, Ktor）
   - `app/src/main/kotlin/data/github/GitHubClient.kt`でKtor HttpClient生成（認証ヘッダ付与、rate-limit対応ログ）
   - `app/src/main/kotlin/data/github/ContentsApi.kt`で`GET /repos/{owner}/{repo}/contents/{path}`と`PUT ...`（Base64, SHA, committer省略でPAT依存）
   - `app/src/main/kotlin/data/github/model/ContentDtos.kt`でDTO/シリアライズ定義
