@@ -30,7 +30,7 @@
   - `app/src/main/kotlin/data/github/model/ContentDtos.kt`でDTO/シリアライズ定義
   - `app/src/test/kotlin/data/github/ContentsApiTest.kt`でAPI呼び出しのシリアライズ・パラメータテスト（モックサーバ）
 
-- [ ] リポジトリ層
+- [x] リポジトリ層
   - `app/src/main/kotlin/data/repo/DiaryRepository.kt`で日記取得/保存/存在確認（409時のハンドリング含む）
   - `app/src/main/kotlin/data/repo/SettingsRepository.kt`でリポ指定`org/repo`保存・検証
   - `app/src/test/kotlin/data/repo/DiaryRepositoryTest.kt`でコンフリクト・未存在時の挙動テスト

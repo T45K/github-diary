@@ -16,10 +16,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import java.util.Base64
 
-class ContentsApi(
+open class ContentsApi(
     private val client: HttpClient
 ) {
-    suspend fun getContent(owner: String, repo: String, path: String, branch: String = AppConfig.defaultBranch): Result<ContentFile?> {
+    open suspend fun getContent(owner: String, repo: String, path: String, branch: String = AppConfig.defaultBranch): Result<ContentFile?> {
         val url = "${AppConfig.githubApiBaseUrl}/repos/$owner/$repo/contents/$path"
         return runCatching {
             client.get(url) {
@@ -37,7 +37,7 @@ class ContentsApi(
         )
     }
 
-    suspend fun putContent(
+    open suspend fun putContent(
         owner: String,
         repo: String,
         path: String,
