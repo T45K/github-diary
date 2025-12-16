@@ -59,7 +59,7 @@
   - `app/src/main/kotlin/ui/calendar/CalendarViewModel.kt`で月次データ取得と今日判定、ロード/エラー管理
   - `app/src/test/kotlin/ui/calendar/CalendarViewModelTest.kt`で月切替・未設定・エラー時挙動テスト
 
-- [ ] 日記プレビューページ
+- [x] 日記プレビューページ
   - `app/src/main/kotlin/ui/preview/PreviewScreen.kt`でMarkdown表示（GFM対応ライブラリ）、左矢印/鉛筆ボタン
   - `app/src/main/kotlin/ui/preview/PreviewViewModel.kt`で取得・ロード中表示・404時編集遷移トリガ
   - `app/src/test/kotlin/ui/preview/PreviewViewModelTest.kt`で既存/未存在/通信エラーのテスト
