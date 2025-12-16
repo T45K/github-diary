@@ -7,10 +7,10 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.util.Base64
 
-class DiaryRepository(
+open class DiaryRepository(
     private val contentsApi: ContentsApi
 ) {
-    suspend fun getDiary(owner: String, repo: String, date: LocalDate): Result<String?> {
+    open suspend fun getDiary(owner: String, repo: String, date: LocalDate): Result<String?> {
         val path = DateFormatter.buildPath(date)
         return when (val result = contentsApi.getContent(owner, repo, path)) {
             is Result.Success -> {
@@ -22,7 +22,7 @@ class DiaryRepository(
         }
     }
 
-    suspend fun saveDiary(
+    open suspend fun saveDiary(
         owner: String,
         repo: String,
         date: LocalDate,
@@ -37,7 +37,7 @@ class DiaryRepository(
         }
     }
 
-    suspend fun exists(owner: String, repo: String, date: LocalDate): Result<Boolean> {
+    open suspend fun exists(owner: String, repo: String, date: LocalDate): Result<Boolean> {
         val path = DateFormatter.buildPath(date)
         return when (val result = contentsApi.getContent(owner, repo, path)) {
             is Result.Success -> Result.Success(result.value != null)

@@ -64,7 +64,7 @@
   - `app/src/main/kotlin/ui/preview/PreviewViewModel.kt`で取得・ロード中表示・404時編集遷移トリガ
   - `app/src/test/kotlin/ui/preview/PreviewViewModelTest.kt`で既存/未存在/通信エラーのテスト
 
-- [ ] 日記編集ページ
+- [x] 日記編集ページ
   - `app/src/main/kotlin/ui/edit/EditScreen.kt`でテキストエディタ（簡易マークダウン補助: 行頭`- `継続）、Saveボタン
   - `app/src/main/kotlin/ui/edit/EditViewModel.kt`で取得→初期文言`# yyyy/MM/dd (ddd)`、保存→プレビュー遷移、409時エラー提示
   - `app/src/test/kotlin/ui/edit/EditViewModelTest.kt`で新規/既存/409/未設定ケースのテスト

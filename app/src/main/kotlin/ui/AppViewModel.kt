@@ -5,9 +5,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
+import ui.navigation.NavRoute
 
 data class AppState(
-    val currentRoute: String = "Calendar",
+    val currentRoute: String = NavRoute.Calendar.name,
     val selectedDate: LocalDate? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
@@ -25,6 +26,11 @@ class AppViewModel(
 
     fun goToday() {
         _state.value = _state.value.copy(selectedDate = dateProvider.today())
+    }
+
+    fun goToCalendarToday() {
+        val today = dateProvider.today()
+        _state.value = _state.value.copy(currentRoute = NavRoute.Calendar.name, selectedDate = today)
     }
 
     fun setLoading(loading: Boolean) {
