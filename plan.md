@@ -49,7 +49,7 @@
   - `app/src/main/kotlin/ui/AppViewModel.kt`でグローバル状態（選択日付、設定有無、ロード中、エラー）とナビゲーション制御
   - `app/src/main/kotlin/ui/AppScreen.kt`でScaffold（共通ヘッダー: 今日/SYNC/設定ボタン、ローディングインジケータ、トースト的エラー表示）
 
-- [ ] 設定ページ（PATフロー反映）
+- [x] 設定ページ（PATフロー反映）
   - `app/src/main/kotlin/ui/settings/SettingsScreen.kt`でトークン入力、`GET /user`接続テスト、スコープ説明、リポ`org/repo`入力
   - `app/src/main/kotlin/ui/settings/SettingsViewModel.kt`で保存処理と検証、401/403時の再設定要求
   - `app/src/test/kotlin/ui/settings/SettingsViewModelTest.kt`で入力検証・保存成功/失敗のテスト

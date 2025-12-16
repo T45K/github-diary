@@ -33,6 +33,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.3")
     testImplementation("io.ktor:ktor-client-mock:2.3.12")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
 
 compose.desktop {
