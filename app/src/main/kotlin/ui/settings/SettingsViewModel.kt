@@ -1,8 +1,12 @@
 package ui.settings
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import core.model.Result
 import data.auth.AuthMode
 import data.auth.TokenStore
+import data.repo.SettingsRepository
 import domain.usecase.ValidateTokenUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,11 +22,27 @@ data class SettingsState(
 
 class SettingsViewModel(
     private val tokenStore: TokenStore,
+    private val settingsRepository: SettingsRepository,
     private val validateToken: ValidateTokenUseCase,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
-    var state: SettingsState = SettingsState()
+    var state by mutableStateOf(SettingsState())
         private set
+
+    init {
+        // ロード済み設定の復元（平文保存前提）
+        when (val loadedRepo = settingsRepository.load()) {
+            is Result.Success -> loadedRepo.value?.let { state = state.copy(repo = it) }
+            else -> {}
+        }
+        when (val loadedToken = tokenStore.load()) {
+            is Result.Success -> loadedToken.value?.let {
+                state = state.copy(token = it.token, authMode = it.mode)
+            }
+
+            else -> {}
+        }
+    }
 
     fun updateToken(value: String) {
         state = state.copy(token = value)
@@ -48,18 +68,24 @@ class SettingsViewModel(
                         return@launch
                     }
                 }
+
                 is Result.Failure -> {
                     state = state.copy(isSaving = false, message = validation.message ?: "Validation failed")
                     onSaved(false, state.message)
                     return@launch
                 }
             }
-            val saveResult = tokenStore.save(TokenStore.StoredToken(state.token, state.authMode))
-            state = when (saveResult) {
-                is Result.Success -> state.copy(isSaving = false, message = "Saved")
-                is Result.Failure -> state.copy(isSaving = false, message = saveResult.message ?: "Save failed")
+            val tokenSave = tokenStore.save(TokenStore.StoredToken(state.token, state.authMode))
+            val repoSave = settingsRepository.save(state.repo)
+            val success = tokenSave is Result.Success && repoSave is Result.Success
+            val message = when {
+                success -> "Saved"
+                tokenSave is Result.Failure -> tokenSave.message ?: "Save failed"
+                repoSave is Result.Failure -> repoSave.message ?: "Save failed"
+                else -> "Save failed"
             }
-            onSaved(saveResult is Result.Success, state.message)
+            state = state.copy(isSaving = false, message = message)
+            onSaved(success, state.message)
         }
     }
 }

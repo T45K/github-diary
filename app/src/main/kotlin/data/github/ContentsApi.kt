@@ -8,9 +8,9 @@ import data.github.model.PutContentResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -30,10 +30,16 @@ open class ContentsApi(
                 when (response.status) {
                     HttpStatusCode.OK -> Result.Success(response.body())
                     HttpStatusCode.NotFound -> Result.Success(null)
-                    else -> Result.Failure("Unexpected status: ${response.status}")
+                    else -> {
+                        println("[DEBUG_LOG] GET contents unexpected status=${response.status} url=$url")
+                        Result.Failure("Unexpected status: ${response.status}")
+                    }
                 }
             },
-            onFailure = { throwable -> Result.Failure("Failed to fetch content", throwable) }
+            onFailure = { throwable ->
+                println("[DEBUG_LOG] GET contents failed url=$url error=${throwable.message}")
+                Result.Failure("Failed to fetch content", throwable)
+            }
         )
     }
 
@@ -64,11 +70,21 @@ open class ContentsApi(
             onSuccess = { response ->
                 when (response.status) {
                     HttpStatusCode.Created, HttpStatusCode.OK -> Result.Success(response.body<PutContentResponse>().content)
-                    HttpStatusCode.Conflict -> Result.Failure("Conflict: ${response.status}")
-                    else -> Result.Failure("Unexpected status: ${response.status}")
+                    HttpStatusCode.Conflict -> {
+                        println("[DEBUG_LOG] PUT contents conflict url=$url")
+                        Result.Failure("Conflict: ${response.status}")
+                    }
+
+                    else -> {
+                        println("[DEBUG_LOG] PUT contents unexpected status=${response.status} url=$url")
+                        Result.Failure("Unexpected status: ${response.status}")
+                    }
                 }
             },
-            onFailure = { throwable -> Result.Failure("Failed to put content", throwable) }
+            onFailure = { throwable ->
+                println("[DEBUG_LOG] PUT contents failed url=$url error=${throwable.message}")
+                Result.Failure("Failed to put content", throwable)
+            }
         )
     }
 }

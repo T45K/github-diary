@@ -18,6 +18,7 @@ open class DiaryRepository(
                 val decoded = decodeBase64(file.content)
                 Result.Success(decoded)
             }
+
             is Result.Failure -> result
         }
     }

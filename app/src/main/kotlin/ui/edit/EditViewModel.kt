@@ -1,5 +1,8 @@
 package ui.edit
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import core.model.Result
 import core.time.DateFormatter
 import data.repo.DiaryRepository
@@ -17,12 +20,19 @@ data class EditState(
 
 class EditViewModel(
     private val diaryRepository: DiaryRepository,
-    private val owner: String,
-    private val repo: String,
-    initialDate: LocalDate,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
-    var state: EditState = EditState(date = initialDate, content = "# ${DateFormatter.formatDisplay(initialDate)}")
+    private var owner: String = ""
+    private var repo: String = ""
+    private var initialDate: LocalDate = LocalDate.now()
+    fun setContext(owner: String, repo: String, date: LocalDate) {
+        this.owner = owner
+        this.repo = repo
+        this.initialDate = date
+        state = EditState(date = date, content = "# ${DateFormatter.formatDisplay(date)}")
+    }
+
+    var state by mutableStateOf(EditState(date = initialDate, content = "# ${DateFormatter.formatDisplay(initialDate)}"))
         private set
 
     fun updateContent(value: String) {
@@ -36,6 +46,7 @@ class EditViewModel(
                     result.value?.let { updateContent(it) }
                     state = state.copy(error = null)
                 }
+
                 is Result.Failure -> state = state.copy(error = result.message)
             }
             onLoaded()

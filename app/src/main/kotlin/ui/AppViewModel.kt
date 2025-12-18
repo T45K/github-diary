@@ -4,8 +4,8 @@ import core.time.DateProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.time.LocalDate
 import ui.navigation.NavRoute
+import java.time.LocalDate
 
 data class AppState(
     val currentRoute: String = NavRoute.Calendar.name,

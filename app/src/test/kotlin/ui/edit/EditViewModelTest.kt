@@ -14,7 +14,8 @@ class EditViewModelTest {
 
     @Test
     fun `initial content has header`() {
-        val vm = EditViewModel(FakeDiaryRepo(), "me", "repo", LocalDate.of(2024, 1, 1), CoroutineScope(Dispatchers.Unconfined))
+        val vm = EditViewModel(FakeDiaryRepo(), CoroutineScope(Dispatchers.Unconfined))
+        vm.setContext("me", "repo", LocalDate.of(2024, 1, 1))
 
         assertTrue(vm.state.content.startsWith("# 2024/01/01"))
     }
@@ -23,7 +24,8 @@ class EditViewModelTest {
     fun `load existing fills content`() = runBlocking {
         val repo = FakeDiaryRepo()
         repo.existing = "hello"
-        val vm = EditViewModel(repo, "me", "repo", LocalDate.of(2024, 1, 2), CoroutineScope(Dispatchers.Unconfined))
+        val vm = EditViewModel(repo, CoroutineScope(Dispatchers.Unconfined))
+        vm.setContext("me", "repo", LocalDate.of(2024, 1, 2))
 
         vm.loadExisting()
 
@@ -33,7 +35,8 @@ class EditViewModelTest {
     @Test
     fun `save sets error on failure`() = runBlocking {
         val repo = FakeDiaryRepo(saveResult = Result.Failure("fail"))
-        val vm = EditViewModel(repo, "me", "repo", LocalDate.of(2024, 1, 3), CoroutineScope(Dispatchers.Unconfined))
+        val vm = EditViewModel(repo, CoroutineScope(Dispatchers.Unconfined))
+        vm.setContext("me", "repo", LocalDate.of(2024, 1, 3))
 
         vm.save()
 

@@ -12,33 +12,33 @@ class PreviewViewModelTest {
 
     @Test
     fun `sets notFound when diary missing`() = runBlocking {
-        val vm = PreviewViewModel(FakeFetchDiary(Result.Success(null)), "me", "repo", LocalDate.of(2024, 1, 1))
+        val vm = PreviewViewModel(FakeFetchDiary(Result.Success(null)), LocalDate.of(2024, 1, 1))
 
-        vm.load()
+        vm.load("me", "repo", LocalDate.of(2024, 1, 1))
 
         assertTrue(vm.state.notFound)
     }
 
     @Test
     fun `loads content when exists`() = runBlocking {
-        val vm = PreviewViewModel(FakeFetchDiary(Result.Success("hello")), "me", "repo", LocalDate.of(2024, 1, 2))
+        val vm = PreviewViewModel(FakeFetchDiary(Result.Success("hello")), LocalDate.of(2024, 1, 2))
 
-        vm.load()
+        vm.load("me", "repo", LocalDate.of(2024, 1, 2))
 
         assertEquals("hello", vm.state.content)
     }
 
     @Test
     fun `sets error on failure`() = runBlocking {
-        val vm = PreviewViewModel(FakeFetchDiary(Result.Failure("err")), "me", "repo", LocalDate.of(2024, 1, 3))
+        val vm = PreviewViewModel(FakeFetchDiary(Result.Failure("err")), LocalDate.of(2024, 1, 3))
 
-        vm.load()
+        vm.load("me", "repo", LocalDate.of(2024, 1, 3))
 
         assertEquals("err", vm.state.error)
     }
 
     private class FakeFetchDiary(private val result: Result<String?>) : FetchDiaryUseCase(
-        diaryRepository = data.repo.DiaryRepository(data.github.ContentsApi(io.ktor.client.HttpClient()))
+        diaryRepository = data.repo.DiaryRepository(data.github.ContentsApi(io.ktor.client.HttpClient())),
     ) {
         override suspend fun invoke(owner: String, repo: String, date: LocalDate): Result<String?> = result
     }

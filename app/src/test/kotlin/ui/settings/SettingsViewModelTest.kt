@@ -6,17 +6,12 @@ import data.auth.TokenStore
 import data.auth.TokenValidator
 import domain.usecase.ValidateTokenUseCase
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
-import java.nio.file.Path
 
 class SettingsViewModelTest {
 
@@ -34,7 +29,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `fails on invalid token`() = runTest {
+    fun `fails on invalid token`() = runBlocking {
         val vm = buildVm(validateResult = Result.Success(false))
 
         vm.save()
@@ -44,9 +39,10 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `saves when token valid`() = runTest {
+    fun `saves when token valid`() = runBlocking {
         val vm = buildVm(validateResult = Result.Success(true))
         vm.updateToken("ok")
+        vm.updateRepo("owner/repo")
 
         vm.save()
 
@@ -56,10 +52,11 @@ class SettingsViewModelTest {
     private fun buildVm(validateResult: Result<Boolean>): SettingsViewModel {
         val tempDir = Files.createTempDirectory("settingsVmTest")
         val tokenStore = TokenStore(filePath = tempDir.resolve("token.json"))
-        val validator = object : TokenValidator(HttpClient(MockEngine { respond("", HttpStatusCode.OK) })) {
+        val settingsRepo = data.repo.SettingsRepository(tempDir.resolve("repo.txt"))
+        val validator = object : TokenValidator(HttpClient()) {
             override suspend fun validate(token: String): Result<Boolean> = validateResult
         }
         val validateUseCase = ValidateTokenUseCase(validator)
-        return SettingsViewModel(tokenStore, validateUseCase, CoroutineScope(Dispatchers.Unconfined))
+        return SettingsViewModel(tokenStore, settingsRepo, validateUseCase, CoroutineScope(Dispatchers.Unconfined))
     }
 }

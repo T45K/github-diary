@@ -1,13 +1,12 @@
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.material.darkColors
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import androidx.compose.runtime.remember
+import core.time.DateProvider
 import ui.AppScreen
 import ui.AppViewModel
-import core.time.DateProvider
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "GitHub Diary") {

@@ -1,5 +1,8 @@
 package ui.calendar
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import core.model.Result
 import domain.usecase.FetchMonthDiariesUseCase
 import java.time.LocalDate
@@ -19,7 +22,7 @@ class CalendarViewModel(
     initialYear: Int,
     initialMonth: Int
 ) {
-    var state: CalendarState = CalendarState(initialYear, initialMonth)
+    var state by mutableStateOf(CalendarState(initialYear, initialMonth))
         private set
 
     suspend fun load(owner: String, repo: String) {
@@ -29,6 +32,7 @@ class CalendarViewModel(
                 val items = result.value.map { DayItem(it.date, it.exists) }
                 state = state.copy(days = items, isLoading = false)
             }
+
             is Result.Failure -> {
                 state = state.copy(isLoading = false, error = result.message ?: "Failed to load")
             }

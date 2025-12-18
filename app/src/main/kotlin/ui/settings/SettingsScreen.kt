@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.dp
 import data.auth.AuthMode
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
-    var token by remember { mutableStateOf(viewModel.state.token) }
-    var repo by remember { mutableStateOf(viewModel.state.repo) }
-    var mode by remember { mutableStateOf(viewModel.state.authMode) }
+fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit = {}) {
+    var token by remember(viewModel.state.token) { mutableStateOf(viewModel.state.token) }
+    var repo by remember(viewModel.state.repo) { mutableStateOf(viewModel.state.repo) }
+    var mode by remember(viewModel.state.authMode) { mutableStateOf(viewModel.state.authMode) }
 
     Column(Modifier.padding(16.dp)) {
         Text("Authentication Mode")
@@ -57,7 +57,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         )
 
         Spacer(Modifier.height(16.dp))
-        Button(onClick = { viewModel.save() }, enabled = !viewModel.state.isSaving) {
+        Button(onClick = {
+            viewModel.save { _, _ ->
+                onSaved()
+            }
+        }, enabled = !viewModel.state.isSaving) {
             Text(if (viewModel.state.isSaving) "Saving..." else "Save")
         }
 
