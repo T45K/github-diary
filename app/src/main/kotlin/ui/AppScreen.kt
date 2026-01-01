@@ -87,7 +87,7 @@ fun AppScreen(viewModel: AppViewModel) {
                     PreviewScreen(
                         state = previewViewModel.state,
                         onBack = { viewModel.navigate(NavRoute.Calendar.name) },
-                        onEdit = { viewModel.navigate(NavRoute.Edit.name, state.selectedDate) },
+                        onEdit = { viewModel.navigate(NavRoute.Edit.name) },
                     )
                 }
 
@@ -97,10 +97,14 @@ fun AppScreen(viewModel: AppViewModel) {
                     }
                     EditScreen(
                         state = editViewModel.state,
+                        onBack = { viewModel.navigate(NavRoute.Preview.name) },
                         onContentChange = {
                             editViewModel.updateContent(it)
                         },
-                        onSave = { editViewModel.save() },
+                        onSave = {
+                            editViewModel.save()
+                            viewModel.navigate(NavRoute.Calendar.name)
+                        },
                     )
                 }
 
