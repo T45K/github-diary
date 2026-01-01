@@ -17,23 +17,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import data.auth.AuthMode
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit = {}) {
     var token by remember(viewModel.state.token) { mutableStateOf(viewModel.state.token) }
     var repo by remember(viewModel.state.repo) { mutableStateOf(viewModel.state.repo) }
-    var mode by remember(viewModel.state.authMode) { mutableStateOf(viewModel.state.authMode) }
 
     Column(Modifier.padding(16.dp)) {
-        Text("Authentication Mode")
-        AuthMode.values().forEach { m ->
-            ModeRow(selected = mode == m, label = m.name) {
-                mode = m
-                viewModel.updateMode(m)
-            }
-        }
-
         Spacer(Modifier.height(12.dp))
         Text("Token")
         OutlinedTextField(
@@ -42,7 +32,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit = {}) {
                 token = it
                 viewModel.updateToken(it)
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(Modifier.height(12.dp))
@@ -53,15 +43,18 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit = {}) {
                 repo = it
                 viewModel.updateRepo(it)
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(Modifier.height(16.dp))
-        Button(onClick = {
-            viewModel.save { _, _ ->
-                onSaved()
-            }
-        }, enabled = !viewModel.state.isSaving) {
+        Button(
+            onClick = {
+                viewModel.save { _, _ ->
+                    onSaved()
+                }
+            },
+            enabled = !viewModel.state.isSaving,
+        ) {
             Text(if (viewModel.state.isSaving) "Saving..." else "Save")
         }
 

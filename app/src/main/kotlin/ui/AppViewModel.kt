@@ -4,18 +4,18 @@ import core.time.DateProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.LocalDate
 import ui.navigation.NavRoute
-import java.time.LocalDate
 
 data class AppState(
     val currentRoute: String = NavRoute.Calendar.name,
     val selectedDate: LocalDate? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )
 
 class AppViewModel(
-    private val dateProvider: DateProvider
+    private val dateProvider: DateProvider,
 ) {
     private val _state = MutableStateFlow(AppState(selectedDate = dateProvider.today()))
     val state: StateFlow<AppState> = _state.asStateFlow()

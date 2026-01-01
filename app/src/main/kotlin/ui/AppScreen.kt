@@ -17,18 +17,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import core.repository.CalendarRepository
+import core.repository.SettingRepository
 import core.time.DateProvider
-import data.auth.TokenStore
-import data.auth.TokenValidator
-import data.github.GitHubClient
-import data.repo.DiaryRepository
-import data.repo.SettingsRepository
-import domain.usecase.FetchDiaryUseCase
-import domain.usecase.FetchMonthDiariesUseCase
-import domain.usecase.ValidateTokenUseCase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.datetime.number
 import ui.calendar.CalendarScreen
 import ui.calendar.CalendarViewModel
 import ui.edit.EditScreen
@@ -44,36 +36,15 @@ fun AppScreen(viewModel: AppViewModel) {
     val state by viewModel.state.collectAsState()
 
     // シンプルなremember生成（本実装ではDIへ置換予定）
-    val tokenStore = remember { TokenStore() }
-    val settingsRepo = remember { SettingsRepository() }
-    val tokenProvider = remember {
-        { tokenStore.load().let { if (it is core.model.Result.Success) it.value?.token else null } }
-    }
-    val httpClient = remember { GitHubClient.create(tokenProvider) }
+    val ghClient = remember { core.repository.GitHubClient() }
+    val settingRepo = remember { SettingRepository(gitHubClient = ghClient) }
+    val calendarRepository = remember { CalendarRepository(ghClient, settingRepo) }
+    val diaryRepository = remember { core.repository.DiaryRepository(ghClient, settingRepo) }
     val dateProvider = remember { DateProvider() }
-    val diaryRepo = remember { DiaryRepository(data.github.ContentsApi(httpClient)) }
-    val fetchMonthUC = remember { FetchMonthDiariesUseCase(diaryRepo, dateProvider) }
-    val fetchDiaryUC = remember { FetchDiaryUseCase(diaryRepo) }
-    val settingsVm = remember { SettingsViewModel(tokenStore, settingsRepo, ValidateTokenUseCase(TokenValidator(httpClient))) }
-    val calendarVm = remember { CalendarViewModel(fetchMonthUC, dateProvider.today().year, dateProvider.today().monthValue) }
-    val previewVm = remember { PreviewViewModel(fetchDiaryUC, state.selectedDate ?: dateProvider.today()) }
-    val editVm = remember { EditViewModel(diaryRepo) }
-
-    val syncCurrent: () -> Unit = {
-        val ownerRepo = parseOwnerRepo(settingsVm.state.repo)
-        ownerRepo?.let { (owner, repo) ->
-            when (ui.navigation.NavRoute.valueOf(state.currentRoute)) {
-                ui.navigation.NavRoute.Calendar -> viewModelScopeLaunch(calendarVm) { calendarVm.load(owner, repo) }
-                ui.navigation.NavRoute.Preview -> state.selectedDate?.let { date -> viewModelScopeLaunch(previewVm) { previewVm.load(owner, repo, date) } }
-                ui.navigation.NavRoute.Edit -> state.selectedDate?.let { date ->
-                    editVm.setContext(owner, repo, date)
-                    viewModelScopeLaunch(editVm) { editVm.loadExisting() }
-                }
-
-                ui.navigation.NavRoute.Settings -> {}
-            }
-        }
-    }
+    val settingsVm = remember { SettingsViewModel(settingRepo) }
+    val calendarVm = remember { CalendarViewModel(calendarRepository, dateProvider.today().year, dateProvider.today().month.number) }
+    val previewVm = remember { PreviewViewModel(diaryRepository, state.selectedDate ?: dateProvider.today()) }
+    val editVm = remember { EditViewModel(diaryRepository, dateProvider) }
 
     Scaffold(
         topBar = {
@@ -92,7 +63,6 @@ fun AppScreen(viewModel: AppViewModel) {
                         ) { Text("今日") }
                     }
                     Row {
-                        Button(onClick = syncCurrent) { Text("Sync") }
                         Button(onClick = { viewModel.navigate(NavRoute.Settings.name) }, modifier = Modifier.padding(start = 8.dp)) {
                             Text("設定")
                         }
@@ -102,39 +72,41 @@ fun AppScreen(viewModel: AppViewModel) {
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            when (ui.navigation.NavRoute.valueOf(state.currentRoute)) {
-                ui.navigation.NavRoute.Calendar -> CalendarScreen(
+            when (NavRoute.valueOf(state.currentRoute)) {
+                NavRoute.Calendar -> CalendarScreen(
                     state = calendarVm.state,
-                    onPrev = { calendarVm.prevMonth(); syncCurrent() },
-                    onNext = { calendarVm.nextMonth(); syncCurrent() },
-                    onSelect = {
-                        viewModel.navigate(ui.navigation.NavRoute.Preview.name, it)
-                    },
+                    onPrev = { calendarVm.prevMonth() },
+                    onNext = { calendarVm.nextMonth() },
+                    onSelect = { date -> viewModel.navigate(NavRoute.Preview.name, date) },
                 )
 
-                ui.navigation.NavRoute.Preview -> PreviewScreen(
-                    state = previewVm.state,
-                    onBack = { viewModel.navigate(ui.navigation.NavRoute.Calendar.name) },
-                    onEdit = { viewModel.navigate(ui.navigation.NavRoute.Edit.name, state.selectedDate) },
-                )
+                NavRoute.Preview -> {
+                    LaunchedEffect(state.selectedDate) {
+                        state.selectedDate?.let { previewVm.load(it) }
+                    }
+                    PreviewScreen(
+                        state = previewVm.state,
+                        onBack = { viewModel.navigate(NavRoute.Calendar.name) },
+                        onEdit = { viewModel.navigate(NavRoute.Edit.name, state.selectedDate) },
+                    )
+                }
 
-                ui.navigation.NavRoute.Edit -> {
-                    parseOwnerRepo(settingsVm.state.repo)?.let { (owner, repo) ->
-                        state.selectedDate?.let { date -> editVm.setContext(owner, repo, date) }
+                NavRoute.Edit -> {
+                    LaunchedEffect(state.selectedDate) {
+                        state.selectedDate?.let { editVm.load(it) }
                     }
                     EditScreen(
                         state = editVm.state,
-                        onContentChange = { editVm.updateContent(it) },
+                        onContentChange = {
+                            editVm.updateContent(it)
+                        },
                         onSave = { editVm.save() },
                     )
                 }
 
-                ui.navigation.NavRoute.Settings -> SettingsScreen(
+                NavRoute.Settings -> SettingsScreen(
                     settingsVm,
-                    onSaved = {
-                        viewModel.goToCalendarToday()
-                        syncCurrent()
-                    },
+                    onSaved = { viewModel.goToCalendarToday() },
                 )
             }
             if (state.isLoading) {
@@ -143,20 +115,4 @@ fun AppScreen(viewModel: AppViewModel) {
             state.errorMessage?.let { Text("Error: $it") }
         }
     }
-
-    LaunchedEffect(state.currentRoute, settingsVm.state.repo, state.selectedDate) {
-        syncCurrent()
-    }
-}
-
-private fun viewModelScopeLaunch(target: Any, block: suspend () -> Unit) {
-    CoroutineScope(Dispatchers.IO).launch { block() }
-}
-
-private fun parseOwnerRepo(text: String): Pair<String, String>? {
-    val trimmed = text.trim()
-    if (!trimmed.contains("/")) return null
-    val parts = trimmed.split("/")
-    if (parts.size != 2 || parts.any { it.isBlank() }) return null
-    return parts[0] to parts[1]
 }

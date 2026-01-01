@@ -1,11 +1,12 @@
 package core.time
 
-import core.AppConfig
-import java.time.Clock
-import java.time.LocalDate
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 class DateProvider(
-    private val clock: Clock = Clock.system(AppConfig.defaultZoneId)
+    private val clock: Clock = Clock.System,
 ) {
-    fun today(): LocalDate = LocalDate.now(clock)
+    fun today(): LocalDate = clock.todayIn(TimeZone.of("Asia/Tokyo"))
 }
