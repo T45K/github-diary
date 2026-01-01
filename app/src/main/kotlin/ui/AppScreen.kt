@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import core.repository.CalendarRepository
+import core.repository.DiaryRepository
 import core.repository.SettingRepository
 import core.time.DateProvider
 import kotlinx.datetime.number
@@ -35,16 +36,15 @@ import ui.settings.SettingsViewModel
 fun AppScreen(viewModel: AppViewModel) {
     val state by viewModel.state.collectAsState()
 
-    // シンプルなremember生成（本実装ではDIへ置換予定）
-    val ghClient = remember { core.repository.GitHubClient() }
-    val settingRepo = remember { SettingRepository(gitHubClient = ghClient) }
-    val calendarRepository = remember { CalendarRepository(ghClient, settingRepo) }
-    val diaryRepository = remember { core.repository.DiaryRepository(ghClient, settingRepo) }
-    val dateProvider = remember { DateProvider() }
-    val settingsVm = remember { SettingsViewModel(settingRepo) }
-    val calendarVm = remember { CalendarViewModel(calendarRepository, dateProvider.today().year, dateProvider.today().month.number) }
-    val previewVm = remember { PreviewViewModel(diaryRepository, state.selectedDate ?: dateProvider.today()) }
-    val editVm = remember { EditViewModel(diaryRepository, dateProvider) }
+    val gitHubClient = core.repository.GitHubClient()
+    val settingRepository = SettingRepository(gitHubClient = gitHubClient)
+    val calendarRepository = CalendarRepository(gitHubClient, settingRepository)
+    val diaryRepository = DiaryRepository(gitHubClient, settingRepository)
+    val dateProvider = DateProvider()
+    val settingsViewModel = remember { SettingsViewModel(settingRepository) }
+    val calendarViewModel = remember { CalendarViewModel(calendarRepository, dateProvider.today().year, dateProvider.today().month.number) }
+    val previewViewModel = remember { PreviewViewModel(diaryRepository, state.selectedDate ?: dateProvider.today()) }
+    val editViewModel = remember { EditViewModel(diaryRepository, dateProvider) }
 
     Scaffold(
         topBar = {
@@ -74,18 +74,18 @@ fun AppScreen(viewModel: AppViewModel) {
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             when (NavRoute.valueOf(state.currentRoute)) {
                 NavRoute.Calendar -> CalendarScreen(
-                    state = calendarVm.state,
-                    onPrev = { calendarVm.prevMonth() },
-                    onNext = { calendarVm.nextMonth() },
+                    state = calendarViewModel.state,
+                    onPrev = { calendarViewModel.prevMonth() },
+                    onNext = { calendarViewModel.nextMonth() },
                     onSelect = { date -> viewModel.navigate(NavRoute.Preview.name, date) },
                 )
 
                 NavRoute.Preview -> {
                     LaunchedEffect(state.selectedDate) {
-                        state.selectedDate?.let { previewVm.load(it) }
+                        state.selectedDate?.let { previewViewModel.load(it) }
                     }
                     PreviewScreen(
-                        state = previewVm.state,
+                        state = previewViewModel.state,
                         onBack = { viewModel.navigate(NavRoute.Calendar.name) },
                         onEdit = { viewModel.navigate(NavRoute.Edit.name, state.selectedDate) },
                     )
@@ -93,19 +93,19 @@ fun AppScreen(viewModel: AppViewModel) {
 
                 NavRoute.Edit -> {
                     LaunchedEffect(state.selectedDate) {
-                        state.selectedDate?.let { editVm.load(it) }
+                        state.selectedDate?.let { editViewModel.load(it) }
                     }
                     EditScreen(
-                        state = editVm.state,
+                        state = editViewModel.state,
                         onContentChange = {
-                            editVm.updateContent(it)
+                            editViewModel.updateContent(it)
                         },
-                        onSave = { editVm.save() },
+                        onSave = { editViewModel.save() },
                     )
                 }
 
                 NavRoute.Settings -> SettingsScreen(
-                    settingsVm,
+                    settingsViewModel,
                     onSaved = { viewModel.goToCalendarToday() },
                 )
             }
