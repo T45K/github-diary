@@ -176,9 +176,12 @@ fun AppScreen() {
                             onBack = { navController.popBackStack() },
                             onContentChange = { editViewModel.updateContent(it) },
                             onSave = {
-                                editViewModel.save()
-                                navController.navigate(NavRoute.Calendar(todayYearMonth)) {
-                                    popUpTo<NavRoute.Calendar> { inclusive = true }
+                                editViewModel.save { success, _ ->
+                                    if (success) {
+                                        navController.navigate(NavRoute.Calendar(todayYearMonth)) {
+                                            popUpTo<NavRoute.Calendar> { inclusive = true }
+                                        }
+                                    }
                                 }
                             },
                         )
