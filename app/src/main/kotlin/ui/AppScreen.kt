@@ -135,7 +135,7 @@ fun AppScreen() {
                         key = date.toString()
                     ) { parametersOf(date) }
 
-                    LaunchedEffect(date) {
+                    LaunchedEffect(backStackEntry) {
                         previewViewModel.load(date)
                     }
 
@@ -161,7 +161,7 @@ fun AppScreen() {
                         key = date.toString()
                     )
 
-                    LaunchedEffect(date) {
+                    LaunchedEffect(backStackEntry) {
                         editViewModel.load(date)
                     }
 
