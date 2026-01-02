@@ -25,7 +25,9 @@ import core.repository.GitHubClient
 import core.repository.SettingRepository
 import core.time.DateProvider
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minusMonth
 import kotlinx.datetime.number
+import kotlinx.datetime.plusMonth
 import ui.calendar.CalendarScreen
 import ui.calendar.CalendarViewModel
 import ui.edit.EditScreen
@@ -94,19 +96,13 @@ fun AppScreen() {
                     CalendarScreen(
                         state = calendarViewModel.state,
                         onPrev = {
-                            val prevMonth = YearMonth(
-                                if (yearMonth.month.number == 1) yearMonth.year - 1 else yearMonth.year,
-                                if (yearMonth.month.number == 1) 12 else yearMonth.month.number - 1
-                            )
+                            val prevMonth = yearMonth.minusMonth()
                             navController.navigate(NavRoute.Calendar(prevMonth)) {
                                 popUpTo<NavRoute.Calendar> { inclusive = true }
                             }
                         },
                         onNext = {
-                            val nextMonth = YearMonth(
-                                if (yearMonth.month.number == 12) yearMonth.year + 1 else yearMonth.year,
-                                if (yearMonth.month.number == 12) 1 else yearMonth.month.number + 1
-                            )
+                            val nextMonth = yearMonth.plusMonth()
                             navController.navigate(NavRoute.Calendar(nextMonth)) {
                                 popUpTo<NavRoute.Calendar> { inclusive = true }
                             }

@@ -31,27 +31,17 @@ class CalendarViewModel(
     var state by mutableStateOf(CalendarState(initialYear, initialMonth))
         private set
 
-    fun load() = viewModelScope.launch {
-        state = state.copy(isLoading = true, error = null)
-        val calendar = calendarRepository.findByMonth(currentDisplayedYearMonth())
-        if (calendar.dates.isEmpty()) {
-            state = state.copy(isLoading = false, error = "Failed to load")
-        } else {
-            val items = calendar.dates.map { (date, hasContent) -> DayItem(date, hasContent) }
-            state = state.copy(days = items, isLoading = false)
+    init {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
+            val calendar = calendarRepository.findByMonth(currentDisplayedYearMonth())
+            if (calendar.dates.isEmpty()) {
+                state = state.copy(isLoading = false, error = "Failed to load")
+            } else {
+                val items = calendar.dates.map { (date, hasContent) -> DayItem(date, hasContent) }
+                state = state.copy(days = items, isLoading = false)
+            }
         }
-    }
-
-    fun nextMonth() {
-        val nextMonth = currentDisplayedYearMonth().plusMonth()
-        state = state.copy(year = nextMonth.year, month = nextMonth.month.number)
-        load()
-    }
-
-    fun prevMonth() {
-        val prevMonth = currentDisplayedYearMonth().minusMonth()
-        state = state.copy(year = prevMonth.year, month = prevMonth.month.number)
-        load()
     }
 
     private fun currentDisplayedYearMonth(): YearMonth = YearMonth(state.year, state.month)
