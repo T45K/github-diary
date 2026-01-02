@@ -3,58 +3,27 @@ package ui.navigation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.number
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-
-object LocalDateSerializer : KSerializer<LocalDate> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDate", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: LocalDate) {
-        encoder.encodeString(value.toString())
-    }
-
-    override fun deserialize(decoder: Decoder): LocalDate {
-        return LocalDate.parse(decoder.decodeString())
-    }
-}
-
-object YearMonthSerializer : KSerializer<YearMonth> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("YearMonth", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: YearMonth) {
-        encoder.encodeString("${value.year}-${value.month.number}")
-    }
-
-    override fun deserialize(decoder: Decoder): YearMonth {
-        val parts = decoder.decodeString().split("-")
-        return YearMonth(parts[0].toInt(), parts[1].toInt())
-    }
-}
 
 @Serializable
 sealed interface NavRoute {
     @Serializable
-    data class Calendar(
-        @Serializable(with = YearMonthSerializer::class)
-        val yearMonth: YearMonth
-    ) : NavRoute
+    data class Calendar(val year: Int, val month: Int) : NavRoute {
+        constructor(yearMonth: YearMonth) : this(yearMonth.year, yearMonth.month.number)
+        val yearMonth: YearMonth get() = YearMonth(year, month)
+    }
 
     @Serializable
-    data class Preview(
-        @Serializable(with = LocalDateSerializer::class)
-        val date: LocalDate
-    ) : NavRoute
+    data class Preview(val year: Int, val month: Int, val day: Int) : NavRoute {
+        constructor(date: LocalDate) : this(date.year, date.month.number, date.day)
+        val date: LocalDate get() = LocalDate(year, month, day)
+    }
 
     @Serializable
-    data class Edit(
-        @Serializable(with = LocalDateSerializer::class)
-        val date: LocalDate
-    ) : NavRoute
+    data class Edit(val year: Int, val month: Int, val day: Int) : NavRoute {
+        constructor(date: LocalDate) : this(date.year, date.month.number, date.day)
+        val date: LocalDate get() = LocalDate(year, month, day)
+    }
 
     @Serializable
     data object Settings : NavRoute
