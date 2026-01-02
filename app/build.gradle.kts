@@ -39,7 +39,14 @@ dependencies {
 
     implementation("io.arrow-kt:arrow-core:2.2.0")
 
+    // Koin for Compose Desktop
+    implementation(platform("io.insert-koin:koin-bom:4.1.1"))
+    implementation("io.insert-koin:koin-core")
+    implementation("io.insert-koin:koin-compose")
+    implementation("io.insert-koin:koin-compose-viewmodel")
+
     testImplementation(kotlin("test"))
+    testImplementation("io.insert-koin:koin-test")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.3")
     testImplementation("io.ktor:ktor-client-mock:3.3.3")

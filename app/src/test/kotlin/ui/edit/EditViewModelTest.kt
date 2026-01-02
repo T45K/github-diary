@@ -43,37 +43,19 @@ class EditViewModelTest {
     }
 
     @Test
-    fun `initial state has today as date`() {
+    fun `initial state is Loading with today as date`() {
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
             dateProvider = dateProvider
         )
 
-        assertEquals(LocalDate(2026, 1, 2), viewModel.state.date)
+        val state = viewModel.uiState.value
+        assertTrue(state is EditUiState.Loading)
+        assertEquals(LocalDate(2026, 1, 2), state.date)
     }
 
     @Test
-    fun `initial state has empty content`() {
-        val viewModel = EditViewModel(
-            diaryRepository = FakeDiaryRepository(),
-            dateProvider = dateProvider
-        )
-
-        assertEquals("", viewModel.state.content)
-    }
-
-    @Test
-    fun `initial state is not saving`() {
-        val viewModel = EditViewModel(
-            diaryRepository = FakeDiaryRepository(),
-            dateProvider = dateProvider
-        )
-
-        assertFalse(viewModel.state.isSaving)
-    }
-
-    @Test
-    fun `load updates date and content`() = runTest {
+    fun `load transitions to Editing with content`() = runTest {
         val expectedContent = "# 2026/01/15 (Thu)\n\nLoaded content"
         val fakeRepo = FakeDiaryRepository(
             diaryContent = DiaryContent(LocalDate(2026, 1, 15), expectedContent)
@@ -86,56 +68,66 @@ class EditViewModelTest {
         viewModel.load(LocalDate(2026, 1, 15))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(LocalDate(2026, 1, 15), viewModel.state.date)
-        assertEquals(expectedContent, viewModel.state.content)
+        val state = viewModel.uiState.value
+        assertTrue(state is EditUiState.Editing)
+        val editingState = state as EditUiState.Editing
+        assertEquals(LocalDate(2026, 1, 15), editingState.date)
+        assertEquals(expectedContent, editingState.content)
+        assertFalse(editingState.isSaving)
     }
 
     @Test
-    fun `updateContent changes content in state`() {
+    fun `updateContent changes content in Editing state`() = runTest {
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
             dateProvider = dateProvider
         )
+
+        viewModel.load(LocalDate(2026, 1, 2))
+        testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.updateContent("New content")
 
-        assertEquals("New content", viewModel.state.content)
+        val state = viewModel.uiState.value
+        assertTrue(state is EditUiState.Editing)
+        assertEquals("New content", (state as EditUiState.Editing).content)
     }
 
     @Test
-    fun `loadExisting loads content from repository`() = runTest {
-        val expectedContent = "# 2026/01/02 (Thu)\n\nExisting"
-        val fakeRepo = FakeDiaryRepository(
-            diaryContent = DiaryContent(LocalDate(2026, 1, 2), expectedContent)
-        )
-        val viewModel = EditViewModel(
-            diaryRepository = fakeRepo,
-            dateProvider = dateProvider
-        )
-
-        var callbackCalled = false
-        viewModel.loadExisting { callbackCalled = true }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(expectedContent, viewModel.state.content)
-        assertTrue(callbackCalled)
-    }
-
-    @Test
-    fun `save sets isSaving during save operation`() = runTest {
+    fun `save sets isSaving to true during operation`() = runTest {
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
             dateProvider = dateProvider
         )
+
+        viewModel.load(LocalDate(2026, 1, 2))
+        testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateContent("Content to save")
 
         viewModel.save()
 
-        assertTrue(viewModel.state.isSaving)
+        val state = viewModel.uiState.value
+        assertTrue(state is EditUiState.Editing)
+        assertTrue((state as EditUiState.Editing).isSaving)
+    }
 
+    @Test
+    fun `save transitions to Saved state on success`() = runTest {
+        val viewModel = EditViewModel(
+            diaryRepository = FakeDiaryRepository(),
+            dateProvider = dateProvider
+        )
+
+        viewModel.load(LocalDate(2026, 1, 2))
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.updateContent("Content to save")
+
+        viewModel.save()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertFalse(viewModel.state.isSaving)
+        val state = viewModel.uiState.value
+        assertTrue(state is EditUiState.Saved)
+        assertEquals(LocalDate(2026, 1, 2), state.date)
     }
 
     @Test
@@ -144,6 +136,9 @@ class EditViewModelTest {
             diaryRepository = FakeDiaryRepository(),
             dateProvider = dateProvider
         )
+
+        viewModel.load(LocalDate(2026, 1, 2))
+        testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateContent("Content")
 
         var savedSuccess: Boolean? = null

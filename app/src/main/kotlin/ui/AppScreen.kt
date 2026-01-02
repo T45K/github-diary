@@ -12,22 +12,22 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import core.repository.CalendarRepository
-import core.repository.DiaryRepository
-import core.repository.GitHubClient
-import core.repository.SettingRepository
 import core.time.DateProvider
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.number
 import kotlinx.datetime.plusMonth
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ui.calendar.CalendarScreen
 import ui.calendar.CalendarViewModel
 import ui.edit.EditScreen
@@ -41,15 +41,12 @@ import ui.settings.SettingsViewModel
 @Composable
 fun AppScreen() {
     val navController = rememberNavController()
-    val dateProvider = DateProvider()
+
+    val dateProvider: DateProvider = koinInject()
     val today = dateProvider.today()
     val todayYearMonth = YearMonth(today.year, today.month.number)
 
-    val gitHubClient = remember { GitHubClient() }
-    val settingRepository = remember { SettingRepository(gitHubClient = gitHubClient) }
-    val calendarRepository = remember { CalendarRepository(gitHubClient, settingRepository) }
-    val diaryRepository = remember { DiaryRepository(gitHubClient, settingRepository) }
-    val settingsViewModel = remember { SettingsViewModel(settingRepository) }
+    val settingsViewModel: SettingsViewModel = koinInject()
 
     Scaffold(
         topBar = {
@@ -89,12 +86,15 @@ fun AppScreen() {
                 composable<NavRoute.Calendar> { backStackEntry ->
                     val route = backStackEntry.toRoute<NavRoute.Calendar>()
                     val yearMonth = route.yearMonth
-                    val calendarViewModel = remember(yearMonth) {
-                        CalendarViewModel(calendarRepository, yearMonth.year, yearMonth.month.number)
-                    }
+
+                    val calendarViewModel: CalendarViewModel = koinViewModel(
+                        key = "${yearMonth.year}-${yearMonth.month.number}"
+                    ) { parametersOf(yearMonth.year, yearMonth.month.number) }
+
+                    val uiState by calendarViewModel.uiState.collectAsState()
 
                     CalendarScreen(
-                        state = calendarViewModel.state,
+                        uiState = uiState,
                         onPrev = {
                             val prevMonth = yearMonth.minusMonth()
                             navController.navigate(NavRoute.Calendar(prevMonth)) {
@@ -114,14 +114,19 @@ fun AppScreen() {
                 composable<NavRoute.Preview> { backStackEntry ->
                     val route = backStackEntry.toRoute<NavRoute.Preview>()
                     val date = route.date
-                    val previewViewModel = remember(date) { PreviewViewModel(diaryRepository, date) }
+
+                    val previewViewModel: PreviewViewModel = koinViewModel(
+                        key = date.toString()
+                    ) { parametersOf(date) }
 
                     LaunchedEffect(date) {
                         previewViewModel.load(date)
                     }
 
+                    val uiState by previewViewModel.uiState.collectAsState()
+
                     PreviewScreen(
-                        state = previewViewModel.state,
+                        uiState = uiState,
                         onBack = { navController.popBackStack() },
                         onEdit = { navController.navigate(NavRoute.Edit(date)) },
                     )
@@ -130,14 +135,19 @@ fun AppScreen() {
                 composable<NavRoute.Edit> { backStackEntry ->
                     val route = backStackEntry.toRoute<NavRoute.Edit>()
                     val date = route.date
-                    val editViewModel = remember(date) { EditViewModel(diaryRepository, dateProvider) }
+
+                    val editViewModel: EditViewModel = koinViewModel(
+                        key = date.toString()
+                    )
 
                     LaunchedEffect(date) {
                         editViewModel.load(date)
                     }
 
+                    val uiState by editViewModel.uiState.collectAsState()
+
                     EditScreen(
-                        state = editViewModel.state,
+                        uiState = uiState,
                         onBack = { navController.popBackStack() },
                         onContentChange = { editViewModel.updateContent(it) },
                         onSave = {
@@ -150,11 +160,19 @@ fun AppScreen() {
                 }
 
                 composable<NavRoute.Settings> {
+                    val uiState by settingsViewModel.uiState.collectAsState()
+
                     SettingsScreen(
-                        settingsViewModel,
-                        onSaved = {
-                            navController.navigate(NavRoute.Calendar(todayYearMonth)) {
-                                popUpTo<NavRoute.Calendar> { inclusive = true }
+                        uiState = uiState,
+                        onTokenChange = { settingsViewModel.updateToken(it) },
+                        onRepoChange = { settingsViewModel.updateRepo(it) },
+                        onSave = {
+                            settingsViewModel.save { success, _ ->
+                                if (success) {
+                                    navController.navigate(NavRoute.Calendar(todayYearMonth)) {
+                                        popUpTo<NavRoute.Calendar> { inclusive = true }
+                                    }
+                                }
                             }
                         },
                     )

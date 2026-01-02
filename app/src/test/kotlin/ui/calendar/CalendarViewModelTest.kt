@@ -37,44 +37,18 @@ class CalendarViewModelTest {
     }
 
     @Test
-    fun `initial state has provided year and month`() {
+    fun `initial state is Loading`() {
         val viewModel = CalendarViewModel(
             calendarRepository = FakeCalendarRepository(),
             initialYear = 2026,
             initialMonth = 1
         )
 
-        assertEquals(2026, viewModel.state.year)
-        assertEquals(1, viewModel.state.month)
+        assertTrue(viewModel.uiState.value is CalendarUiState.Loading)
     }
 
     @Test
-    fun `initial state has empty days`() {
-        val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
-            initialYear = 2026,
-            initialMonth = 1
-        )
-
-        assertTrue(viewModel.state.days.isEmpty())
-    }
-
-    @Test
-    fun `load sets isLoading to true then false`() = runTest {
-        val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
-            initialYear = 2026,
-            initialMonth = 1
-        )
-
-        viewModel.load()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertFalse(viewModel.state.isLoading)
-    }
-
-    @Test
-    fun `load populates days from repository`() = runTest {
+    fun `after loading, state becomes Success with days`() = runTest {
         val fakeRepo = FakeCalendarRepository(
             returnCalendar = Calendar(
                 listOf(
@@ -89,16 +63,20 @@ class CalendarViewModelTest {
             initialMonth = 1
         )
 
-        viewModel.load()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(2, viewModel.state.days.size)
-        assertTrue(viewModel.state.days[0].exists)
-        assertFalse(viewModel.state.days[1].exists)
+        val state = viewModel.uiState.value
+        assertTrue(state is CalendarUiState.Success)
+        val successState = state as CalendarUiState.Success
+        assertEquals(2026, successState.year)
+        assertEquals(1, successState.month)
+        assertEquals(2, successState.days.size)
+        assertTrue(successState.days[0].exists)
+        assertFalse(successState.days[1].exists)
     }
 
     @Test
-    fun `load sets error when calendar is empty`() = runTest {
+    fun `state becomes Error when calendar is empty`() = runTest {
         val fakeRepo = FakeCalendarRepository(returnCalendar = Calendar(emptyList()))
         val viewModel = CalendarViewModel(
             calendarRepository = fakeRepo,
@@ -106,70 +84,36 @@ class CalendarViewModelTest {
             initialMonth = 1
         )
 
-        viewModel.load()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals("Failed to load", viewModel.state.error)
+        val state = viewModel.uiState.value
+        assertTrue(state is CalendarUiState.Error)
+        val errorState = state as CalendarUiState.Error
+        assertEquals(2026, errorState.year)
+        assertEquals(1, errorState.month)
+        assertEquals("Failed to load", errorState.message)
     }
 
     @Test
-    fun `nextMonth increments month`() = runTest {
+    fun `Success state has correct year and month`() = runTest {
+        val fakeRepo = FakeCalendarRepository(
+            returnCalendar = Calendar(
+                listOf(LocalDate(2026, 6, 15) to true)
+            )
+        )
         val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
+            calendarRepository = fakeRepo,
             initialYear = 2026,
-            initialMonth = 1
+            initialMonth = 6
         )
 
-        viewModel.nextMonth()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(2026, viewModel.state.year)
-        assertEquals(2, viewModel.state.month)
-    }
-
-    @Test
-    fun `nextMonth wraps year when December`() = runTest {
-        val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
-            initialYear = 2026,
-            initialMonth = 12
-        )
-
-        viewModel.nextMonth()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(2027, viewModel.state.year)
-        assertEquals(1, viewModel.state.month)
-    }
-
-    @Test
-    fun `prevMonth decrements month`() = runTest {
-        val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
-            initialYear = 2026,
-            initialMonth = 3
-        )
-
-        viewModel.prevMonth()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(2026, viewModel.state.year)
-        assertEquals(2, viewModel.state.month)
-    }
-
-    @Test
-    fun `prevMonth wraps year when January`() = runTest {
-        val viewModel = CalendarViewModel(
-            calendarRepository = FakeCalendarRepository(),
-            initialYear = 2026,
-            initialMonth = 1
-        )
-
-        viewModel.prevMonth()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(2025, viewModel.state.year)
-        assertEquals(12, viewModel.state.month)
+        val state = viewModel.uiState.value
+        assertTrue(state is CalendarUiState.Success)
+        val successState = state as CalendarUiState.Success
+        assertEquals(2026, successState.year)
+        assertEquals(6, successState.month)
     }
 }
 

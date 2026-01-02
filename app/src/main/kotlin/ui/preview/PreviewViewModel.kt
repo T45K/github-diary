@@ -1,34 +1,61 @@
 package ui.preview
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import core.entity.DiaryContent
 import core.repository.DiaryRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
-data class PreviewState(
-    val date: LocalDate,
-    val content: String? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val notFound: Boolean = false,
-)
+sealed class PreviewUiState {
+    abstract val date: LocalDate
+
+    data class Loading(override val date: LocalDate) : PreviewUiState()
+
+    data class Success(
+        override val date: LocalDate,
+        val content: String,
+    ) : PreviewUiState()
+
+    data class NotFound(override val date: LocalDate) : PreviewUiState()
+
+    data class Error(
+        override val date: LocalDate,
+        val message: String,
+    ) : PreviewUiState()
+}
 
 class PreviewViewModel(
     private val diaryRepository: DiaryRepository,
     initialDate: LocalDate,
-) {
-    var state by mutableStateOf(PreviewState(date = initialDate, isLoading = true))
-        private set
+) : ViewModel() {
+    private val _uiState = MutableStateFlow<PreviewUiState>(PreviewUiState.Loading(initialDate))
+    val uiState: StateFlow<PreviewUiState> = _uiState.asStateFlow()
 
-    suspend fun load(date: LocalDate) {
-        state = state.copy(date = date)
-        state = state.copy(isLoading = true, error = null, notFound = false)
-        val diaryContent = diaryRepository.findByDate(state.date)
-        state = state.copy(content = diaryContent.content, isLoading = false)
-    }
+    fun load(date: LocalDate) {
+        viewModelScope.launch {
+            _uiState.value = PreviewUiState.Loading(date)
 
-    fun setDate(date: LocalDate) {
-        state = state.copy(date = date)
+            try {
+                val diaryContent = diaryRepository.findByDate(date)
+                val headerOnly = DiaryContent.init(date).content
+                if (diaryContent.content.isBlank() || diaryContent.content == headerOnly) {
+                    _uiState.value = PreviewUiState.NotFound(date)
+                } else {
+                    _uiState.value = PreviewUiState.Success(
+                        date = date,
+                        content = diaryContent.content
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = PreviewUiState.Error(
+                    date = date,
+                    message = e.message ?: "Unknown error"
+                )
+            }
+        }
     }
 }

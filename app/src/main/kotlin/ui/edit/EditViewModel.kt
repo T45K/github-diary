@@ -1,59 +1,94 @@
 package ui.edit
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import core.entity.DiaryContent
 import core.repository.DiaryRepository
 import core.time.DateProvider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
-data class EditState(
-    val date: LocalDate,
-    val content: String = "",
-    val isSaving: Boolean = false,
-    val error: String? = null,
-)
+sealed class EditUiState {
+    abstract val date: LocalDate
+
+    data class Loading(override val date: LocalDate) : EditUiState()
+
+    data class Editing(
+        override val date: LocalDate,
+        val content: String,
+        val isSaving: Boolean = false,
+    ) : EditUiState()
+
+    data class Saved(override val date: LocalDate) : EditUiState()
+
+    data class Error(
+        override val date: LocalDate,
+        val content: String,
+        val message: String,
+    ) : EditUiState()
+}
 
 class EditViewModel(
     private val diaryRepository: DiaryRepository,
     dateProvider: DateProvider,
 ) : ViewModel() {
-    var state by mutableStateOf(EditState(date = dateProvider.today()))
-        private set
+    private val _uiState = MutableStateFlow<EditUiState>(EditUiState.Loading(dateProvider.today()))
+    val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
 
     fun load(date: LocalDate) {
-        state = state.copy(date = date)
         viewModelScope.launch {
-            val diaryContent = diaryRepository.findByDate(date)
-            state = state.copy(content = diaryContent.content)
+            _uiState.value = EditUiState.Loading(date)
+
+            try {
+                val diaryContent = diaryRepository.findByDate(date)
+                _uiState.value = EditUiState.Editing(
+                    date = date,
+                    content = diaryContent.content
+                )
+            } catch (e: Exception) {
+                _uiState.value = EditUiState.Error(
+                    date = date,
+                    content = "",
+                    message = e.message ?: "Failed to load"
+                )
+            }
         }
     }
 
     fun updateContent(value: String) {
-        state = state.copy(content = value)
-    }
-
-    fun loadExisting(onLoaded: () -> Unit = {}) {
-        viewModelScope.launch {
-            val diaryContent = diaryRepository.findByDate(state.date)
-            updateContent(diaryContent.content)
-
-            state = state.copy(error = null)
-
-            onLoaded()
+        val currentState = _uiState.value
+        if (currentState is EditUiState.Editing) {
+            _uiState.value = currentState.copy(content = value)
+        } else if (currentState is EditUiState.Error) {
+            _uiState.value = EditUiState.Editing(
+                date = currentState.date,
+                content = value
+            )
         }
     }
 
     fun save(onSaved: (Boolean, String?) -> Unit = { _, _ -> }) {
-        state = state.copy(isSaving = true, error = null)
+        val currentState = _uiState.value
+        if (currentState !is EditUiState.Editing) return
+
+        _uiState.value = currentState.copy(isSaving = true)
+
         viewModelScope.launch {
-            diaryRepository.save(DiaryContent(state.date, state.content))
-            state = state.copy(isSaving = false)
-            onSaved(true, state.error)
+            try {
+                diaryRepository.save(DiaryContent(currentState.date, currentState.content))
+                _uiState.value = EditUiState.Saved(currentState.date)
+                onSaved(true, null)
+            } catch (e: Exception) {
+                _uiState.value = EditUiState.Error(
+                    date = currentState.date,
+                    content = currentState.content,
+                    message = e.message ?: "Failed to save"
+                )
+                onSaved(false, e.message)
+            }
         }
     }
 }

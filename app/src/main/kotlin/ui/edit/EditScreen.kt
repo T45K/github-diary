@@ -1,12 +1,16 @@
 package ui.edit
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -18,43 +22,84 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 
 @Composable
-fun EditScreen(state: EditState, onBack: () -> Unit, onContentChange: (String) -> Unit, onSave: () -> Unit) {
-    var localText by remember(state.content) { mutableStateOf(state.content) }
-
+fun EditScreen(
+    uiState: EditUiState,
+    onBack: () -> Unit,
+    onContentChange: (String) -> Unit,
+    onSave: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.date.format(LocalDate.Formats.ISO)) },
+                title = { Text(uiState.date.format(LocalDate.Formats.ISO)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 },
             )
         },
     ) { padding ->
         Column(Modifier.padding(padding).padding(16.dp)) {
-            OutlinedTextField(
-                value = localText,
-                onValueChange = {
-                    localText = it
-                    onContentChange(it)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(Modifier.padding(top = 12.dp)) {
-                Button(onClick = onSave, enabled = !state.isSaving) {
-                    Text(if (state.isSaving) "Saving..." else "Save")
+            when (uiState) {
+                is EditUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
 
-            state.error?.let {
-                Text("Error: $it", modifier = Modifier.padding(top = 8.dp))
+                is EditUiState.Editing -> {
+                    var localText by remember(uiState.content) { mutableStateOf(uiState.content) }
+
+                    OutlinedTextField(
+                        value = localText,
+                        onValueChange = {
+                            localText = it
+                            onContentChange(it)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Row(Modifier.padding(top = 12.dp)) {
+                        Button(onClick = onSave, enabled = !uiState.isSaving) {
+                            Text(if (uiState.isSaving) "Saving..." else "Save")
+                        }
+                    }
+                }
+
+                is EditUiState.Saved -> {
+                    Text("Saved successfully!")
+                }
+
+                is EditUiState.Error -> {
+                    var localText by remember(uiState.content) { mutableStateOf(uiState.content) }
+
+                    Text(
+                        text = "Error: ${uiState.message}",
+                        color = MaterialTheme.colors.error,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = localText,
+                        onValueChange = {
+                            localText = it
+                            onContentChange(it)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Row(Modifier.padding(top = 12.dp)) {
+                        Button(onClick = onSave) { Text("Retry Save") }
+                    }
+                }
             }
         }
     }

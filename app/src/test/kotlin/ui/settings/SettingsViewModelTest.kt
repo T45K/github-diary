@@ -33,45 +33,62 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `initial state loads from repository`() = runTest {
+    fun `initial state is Loading`() {
+        val viewModel = SettingsViewModel(FakeSettingRepository())
+
+        assertTrue(viewModel.uiState.value is SettingsUiState.Loading)
+    }
+
+    @Test
+    fun `state becomes Ready with values from repository`() = runTest {
         val fakeRepo = FakeSettingRepository(
             loadResult = GitHubPersonalAccessToken("saved-token") to GitHubRepositoryPath("owner", "repo")
         )
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals("saved-token", viewModel.state.token)
-        assertEquals("owner/repo", viewModel.state.repo)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        val readyState = state as SettingsUiState.Ready
+        assertEquals("saved-token", readyState.token)
+        assertEquals("owner/repo", readyState.repo)
     }
 
     @Test
-    fun `initial state has empty values when repository returns null`() = runTest {
+    fun `state becomes Ready with empty values when repository returns null`() = runTest {
         val fakeRepo = FakeSettingRepository(loadResult = null to null)
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals("", viewModel.state.token)
-        assertEquals("", viewModel.state.repo)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        val readyState = state as SettingsUiState.Ready
+        assertEquals("", readyState.token)
+        assertEquals("", readyState.repo)
     }
 
     @Test
-    fun `updateToken changes token in state`() = runTest {
+    fun `updateToken changes token in Ready state`() = runTest {
         val viewModel = SettingsViewModel(FakeSettingRepository())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.updateToken("new-token")
 
-        assertEquals("new-token", viewModel.state.token)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        assertEquals("new-token", (state as SettingsUiState.Ready).token)
     }
 
     @Test
-    fun `updateRepo changes repo in state`() = runTest {
+    fun `updateRepo changes repo in Ready state`() = runTest {
         val viewModel = SettingsViewModel(FakeSettingRepository())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.updateRepo("new-owner/new-repo")
 
-        assertEquals("new-owner/new-repo", viewModel.state.repo)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        assertEquals("new-owner/new-repo", (state as SettingsUiState.Ready).repo)
     }
 
     @Test
@@ -87,7 +104,9 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(savedSuccess!!)
-        assertEquals("Invalid repository path format", viewModel.state.message)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        assertEquals("Invalid repository path format", (state as SettingsUiState.Ready).message)
     }
 
     @Test
@@ -104,7 +123,9 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(savedSuccess!!)
-        assertEquals("Invalid token permission", viewModel.state.message)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        assertEquals("Invalid token permission", (state as SettingsUiState.Ready).message)
     }
 
     @Test
@@ -121,7 +142,9 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(savedSuccess!!)
-        assertEquals("Saved", viewModel.state.message)
+        val state = viewModel.uiState.value
+        assertTrue(state is SettingsUiState.Ready)
+        assertEquals("Saved", (state as SettingsUiState.Ready).message)
     }
 
     @Test
@@ -134,11 +157,15 @@ class SettingsViewModelTest {
 
         viewModel.save()
 
-        assertTrue(viewModel.state.isSaving)
+        val stateDuring = viewModel.uiState.value
+        assertTrue(stateDuring is SettingsUiState.Ready)
+        assertTrue((stateDuring as SettingsUiState.Ready).isSaving)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertFalse(viewModel.state.isSaving)
+        val stateAfter = viewModel.uiState.value
+        assertTrue(stateAfter is SettingsUiState.Ready)
+        assertFalse((stateAfter as SettingsUiState.Ready).isSaving)
     }
 }
 
