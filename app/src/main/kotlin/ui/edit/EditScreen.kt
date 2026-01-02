@@ -24,6 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
@@ -35,7 +41,25 @@ fun EditScreen(
     onContentChange: (String) -> Unit,
     onSave: () -> Unit,
 ) {
+    val canSave = when (uiState) {
+        is EditUiState.Editing -> !uiState.isSaving
+        is EditUiState.Error -> true
+        else -> false
+    }
+
     Scaffold(
+        modifier = Modifier.onPreviewKeyEvent { event ->
+            if (event.type == KeyEventType.KeyDown &&
+                event.isMetaPressed &&
+                (event.key == Key.S || event.key == Key.Enter) &&
+                canSave
+            ) {
+                onSave()
+                true
+            } else {
+                false
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(uiState.date.format(LocalDate.Formats.ISO)) },
