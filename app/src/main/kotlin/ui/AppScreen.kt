@@ -24,6 +24,7 @@ import core.repository.DiaryRepository
 import core.repository.GitHubClient
 import core.repository.SettingRepository
 import core.time.DateProvider
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.number
 import ui.calendar.CalendarScreen
 import ui.calendar.CalendarViewModel
@@ -40,13 +41,13 @@ fun AppScreen() {
     val navController = rememberNavController()
     val dateProvider = DateProvider()
     val today = dateProvider.today()
+    val todayYearMonth = YearMonth(today.year, today.month.number)
 
     val gitHubClient = remember { GitHubClient() }
     val settingRepository = remember { SettingRepository(gitHubClient = gitHubClient) }
     val calendarRepository = remember { CalendarRepository(gitHubClient, settingRepository) }
     val diaryRepository = remember { DiaryRepository(gitHubClient, settingRepository) }
     val settingsViewModel = remember { SettingsViewModel(settingRepository) }
-    val calendarViewModel = remember { CalendarViewModel(calendarRepository, today.year, today.month.number) }
 
     Scaffold(
         topBar = {
@@ -60,8 +61,8 @@ fun AppScreen() {
                     Row {
                         Button(
                             onClick = {
-                                navController.navigate(NavRoute.Calendar) {
-                                    popUpTo(NavRoute.Calendar) { inclusive = true }
+                                navController.navigate(NavRoute.Calendar(todayYearMonth)) {
+                                    popUpTo<NavRoute.Calendar> { inclusive = true }
                                 }
                             },
                         ) { Text("今日") }
@@ -81,20 +82,42 @@ fun AppScreen() {
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             NavHost(
                 navController = navController,
-                startDestination = NavRoute.Calendar,
+                startDestination = NavRoute.Calendar(todayYearMonth),
             ) {
-                composable<NavRoute.Calendar> {
+                composable<NavRoute.Calendar> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.Calendar>()
+                    val yearMonth = route.yearMonth
+                    val calendarViewModel = remember(yearMonth) {
+                        CalendarViewModel(calendarRepository, yearMonth.year, yearMonth.month.number)
+                    }
+
                     CalendarScreen(
                         state = calendarViewModel.state,
-                        onPrev = { calendarViewModel.prevMonth() },
-                        onNext = { calendarViewModel.nextMonth() },
+                        onPrev = {
+                            val prevMonth = YearMonth(
+                                if (yearMonth.month.number == 1) yearMonth.year - 1 else yearMonth.year,
+                                if (yearMonth.month.number == 1) 12 else yearMonth.month.number - 1
+                            )
+                            navController.navigate(NavRoute.Calendar(prevMonth)) {
+                                popUpTo<NavRoute.Calendar> { inclusive = true }
+                            }
+                        },
+                        onNext = {
+                            val nextMonth = YearMonth(
+                                if (yearMonth.month.number == 12) yearMonth.year + 1 else yearMonth.year,
+                                if (yearMonth.month.number == 12) 1 else yearMonth.month.number + 1
+                            )
+                            navController.navigate(NavRoute.Calendar(nextMonth)) {
+                                popUpTo<NavRoute.Calendar> { inclusive = true }
+                            }
+                        },
                         onSelect = { date -> navController.navigate(NavRoute.Preview(date)) },
                     )
                 }
 
                 composable<NavRoute.Preview> { backStackEntry ->
                     val route = backStackEntry.toRoute<NavRoute.Preview>()
-                    val date = route.toLocalDate()
+                    val date = route.date
                     val previewViewModel = remember(date) { PreviewViewModel(diaryRepository, date) }
 
                     LaunchedEffect(date) {
@@ -110,7 +133,7 @@ fun AppScreen() {
 
                 composable<NavRoute.Edit> { backStackEntry ->
                     val route = backStackEntry.toRoute<NavRoute.Edit>()
-                    val date = route.toLocalDate()
+                    val date = route.date
                     val editViewModel = remember(date) { EditViewModel(diaryRepository, dateProvider) }
 
                     LaunchedEffect(date) {
@@ -123,8 +146,8 @@ fun AppScreen() {
                         onContentChange = { editViewModel.updateContent(it) },
                         onSave = {
                             editViewModel.save()
-                            navController.navigate(NavRoute.Calendar) {
-                                popUpTo(NavRoute.Calendar) { inclusive = true }
+                            navController.navigate(NavRoute.Calendar(todayYearMonth)) {
+                                popUpTo<NavRoute.Calendar> { inclusive = true }
                             }
                         },
                     )
@@ -134,8 +157,8 @@ fun AppScreen() {
                     SettingsScreen(
                         settingsViewModel,
                         onSaved = {
-                            navController.navigate(NavRoute.Calendar) {
-                                popUpTo(NavRoute.Calendar) { inclusive = true }
+                            navController.navigate(NavRoute.Calendar(todayYearMonth)) {
+                                popUpTo<NavRoute.Calendar> { inclusive = true }
                             }
                         },
                     )
