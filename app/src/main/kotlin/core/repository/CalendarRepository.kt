@@ -7,11 +7,11 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 
-class CalendarRepository(
+open class CalendarRepository(
     private val client: GitHubClient,
     private val settingRepository: SettingRepository,
 ) {
-    suspend fun findByMonth(yearMonth: YearMonth): Calendar {
+    open suspend fun findByMonth(yearMonth: YearMonth): Calendar {
         val (token, repoPath) = settingRepository.load()
         return if (token == null || repoPath == null) {
             Calendar(emptyList())

@@ -7,11 +7,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 
-class DiaryRepository(
+open class DiaryRepository(
     private val client: GitHubClient,
     private val settingRepository: SettingRepository,
 ) {
-    suspend fun save(diary: DiaryContent) {
+    open suspend fun save(diary: DiaryContent) {
         val (accessToken, repoPath) = settingRepository.load()
         if (accessToken == null || repoPath == null) {
             return
@@ -32,7 +32,7 @@ class DiaryRepository(
         )
     }
 
-    suspend fun findByDate(date: LocalDate): DiaryContent {
+    open suspend fun findByDate(date: LocalDate): DiaryContent {
         val (accessToken, repoPath) = settingRepository.load()
         if (accessToken == null || repoPath == null) {
             return DiaryContent.init(date)

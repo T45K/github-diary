@@ -26,11 +26,11 @@ data class DiaryContent(val date: LocalDate, val content: String) {
     }
 
     fun updateContent(content: String): DiaryContent {
-        val diaryDate = date.format(diaryTitleDateFormat)
-        return if (content.startsWith(diaryDate)) {
+        val diaryHeader = "# ${date.format(diaryTitleDateFormat)}"
+        return if (content.startsWith(diaryHeader)) {
             DiaryContent(date, content)
         } else {
-            DiaryContent(date, "$diaryDate\n\n$content")
+            DiaryContent(date, "$diaryHeader\n\n$content")
         }
     }
 }

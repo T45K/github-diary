@@ -19,7 +19,7 @@ import java.nio.file.StandardOpenOption.WRITE
 /**
  * Serialize/deserialize user settings for GitHub personal access token and repository path via a text file.
  */
-class SettingRepository(
+open class SettingRepository(
     private val settingFilePath: Path = Path(System.getenv("HOME"), ".github_diary", "settings.json"),
     private val gitHubClient: GitHubClient,
 ) {
@@ -32,12 +32,12 @@ class SettingRepository(
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun save(pat: GitHubPersonalAccessToken?, path: GitHubRepositoryPath?) {
+    open suspend fun save(pat: GitHubPersonalAccessToken?, path: GitHubRepositoryPath?) {
         val encodedText = json.encodeToString(SettingFileJsonFormat(pat, path))
         withContext(Dispatchers.IO) { settingFilePath.writeText(encodedText, options = arrayOf(WRITE, TRUNCATE_EXISTING)) }
     }
 
-    suspend fun load(): Pair<GitHubPersonalAccessToken?, GitHubRepositoryPath?> {
+    open suspend fun load(): Pair<GitHubPersonalAccessToken?, GitHubRepositoryPath?> {
         val encodedText = withContext(Dispatchers.IO) { settingFilePath.readText() }
         val json = try {
             json.decodeFromString<SettingFileJsonFormat>(encodedText)
@@ -50,7 +50,7 @@ class SettingRepository(
         return pat to path
     }
 
-    suspend fun hasPermission(pat: GitHubPersonalAccessToken, path: GitHubRepositoryPath): Boolean {
+    open suspend fun hasPermission(pat: GitHubPersonalAccessToken, path: GitHubRepositoryPath): Boolean {
         return gitHubClient.getRepository(pat, path.owner, path.name) != null
     }
 }

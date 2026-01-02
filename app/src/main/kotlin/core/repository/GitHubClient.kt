@@ -22,7 +22,7 @@ import kotlinx.serialization.json.Json
 /**
  * https://docs.github.com/ja/rest/repos/contents
  */
-class GitHubClient(private val host: String = "https://api.github.com") {
+open class GitHubClient(private val host: String = "https://api.github.com") {
     private val client: HttpClient = HttpClient {
         install(ContentNegotiation) {
             json(
@@ -38,7 +38,7 @@ class GitHubClient(private val host: String = "https://api.github.com") {
         }
     }
 
-    suspend fun getContent(accessToken: GitHubPersonalAccessToken, pathParam: GitHubContentApiPathParam): ContentFile? {
+    open suspend fun getContent(accessToken: GitHubPersonalAccessToken, pathParam: GitHubContentApiPathParam): ContentFile? {
         val response = client.get {
             url.path("repos", pathParam.owner, pathParam.repo, "contents", pathParam.path)
             bearerAuth(accessToken.value)
@@ -57,7 +57,7 @@ class GitHubClient(private val host: String = "https://api.github.com") {
      * @param content is encoded in Base64
      * @param sha is necessary when updating an existing content
      */
-    suspend fun putContent(
+    open suspend fun putContent(
         accessToken: GitHubPersonalAccessToken,
         pathParam: GitHubContentApiPathParam,
         message: String,
@@ -82,7 +82,7 @@ class GitHubClient(private val host: String = "https://api.github.com") {
         }
     }
 
-    suspend fun getRepository(
+    open suspend fun getRepository(
         accessToken: GitHubPersonalAccessToken,
         owner: String,
         repo: String,
