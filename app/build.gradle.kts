@@ -1,3 +1,5 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
+
 plugins {
     kotlin("jvm") version "2.3.0"
 
@@ -8,12 +10,10 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(25)
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+    jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        @Suppress("UnstableApiUsage")
+        vendor = JvmVendorSpec.JETBRAINS
     }
 }
 
@@ -56,6 +56,16 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "MainKt"
+
+        nativeDistributions {
+            targetFormats(Dmg)
+            packageName = "github_diary"
+            packageVersion = "1.0.0"
+
+            macOS {
+                bundleID = "io.github.t45k.github-diary"
+            }
+        }
     }
 }
 
