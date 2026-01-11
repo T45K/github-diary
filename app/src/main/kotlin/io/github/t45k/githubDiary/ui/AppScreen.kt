@@ -21,28 +21,25 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.github.t45k.githubDiary.core.time.DateProvider
+import io.github.t45k.githubDiary.calendar.CalendarScreen
+import io.github.t45k.githubDiary.calendar.CalendarViewModel
+import io.github.t45k.githubDiary.diary.edit.EditScreen
+import io.github.t45k.githubDiary.diary.edit.EditViewModel
+import io.github.t45k.githubDiary.diary.preview.PreviewScreen
+import io.github.t45k.githubDiary.diary.preview.PreviewViewModel
+import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditScreen
+import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
+import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewScreen
+import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
+import io.github.t45k.githubDiary.setting.SettingsScreen
+import io.github.t45k.githubDiary.setting.SettingsViewModel
+import io.github.t45k.githubDiary.util.DateProvider
 import kotlinx.datetime.minusMonth
-import kotlinx.datetime.number
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import io.github.t45k.githubDiary.ui.calendar.CalendarScreen
-import io.github.t45k.githubDiary.ui.calendar.CalendarViewModel
-import io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer
-import io.github.t45k.githubDiary.ui.diary.edit.EditScreen
-import io.github.t45k.githubDiary.ui.diary.edit.EditViewModel
-import io.github.t45k.githubDiary.ui.diary.preview.PreviewScreen
-import io.github.t45k.githubDiary.ui.diary.preview.PreviewViewModel
-import io.github.t45k.githubDiary.ui.goal.edit.GoalEditScreen
-import io.github.t45k.githubDiary.ui.goal.edit.GoalEditViewModel
-import io.github.t45k.githubDiary.ui.goal.preview.GoalPreviewScreen
-import io.github.t45k.githubDiary.ui.goal.preview.GoalPreviewViewModel
-import io.github.t45k.githubDiary.ui.navigation.NavRoute
-import io.github.t45k.githubDiary.ui.settings.SettingsScreen
-import io.github.t45k.githubDiary.ui.settings.SettingsViewModel
 
 @Composable
 fun AppScreen() {
@@ -50,7 +47,7 @@ fun AppScreen() {
 
     val dateProvider: DateProvider = koinInject()
 
-    val settingsViewModel: io.github.t45k.githubDiary.ui.settings.SettingsViewModel = koinInject()
+    val settingsViewModel: SettingsViewModel = koinInject()
 
     Scaffold(
         topBar = {
@@ -63,14 +60,14 @@ fun AppScreen() {
                 ) {
                     Button(
                         onClick = {
-                            navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(dateProvider.currentYearMonth())) {
-                                popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                            navController.navigate(NavRoute.Calendar(dateProvider.currentYearMonth())) {
+                                popUpTo<NavRoute.Calendar> { inclusive = true }
                             }
                         },
                     ) { Text("今日") }
 
                     Button(
-                        onClick = { navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Settings) },
+                        onClick = { navController.navigate(NavRoute.Settings) },
                         modifier = Modifier.padding(start = 8.dp),
                     ) {
                         Text("設定")
@@ -82,81 +79,81 @@ fun AppScreen() {
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             NavHost(
                 navController = navController,
-                startDestination = _root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(dateProvider.currentYearMonth()),
+                startDestination = NavRoute.Calendar(dateProvider.currentYearMonth()),
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None },
             ) {
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { backStackEntry ->
-                    val route = backStackEntry.toRoute<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar>()
+                composable<NavRoute.Calendar> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.Calendar>()
                     val yearMonth = route.yearMonth
 
-                    val calendarViewModel: io.github.t45k.githubDiary.ui.calendar.CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth.year, yearMonth.month.number) }
+                    val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
 
                     val uiState by calendarViewModel.uiState.collectAsState()
 
                     val navigateToPrevMonth = {
                         val prevMonth = yearMonth.minusMonth()
-                        navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(prevMonth)) {
-                            popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                        navController.navigate(NavRoute.Calendar(prevMonth)) {
+                            popUpTo<NavRoute.Calendar> { inclusive = true }
                         }
                     }
                     val navigateToNextMonth = {
                         val nextMonth = yearMonth.plusMonth()
-                        navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(nextMonth)) {
-                            popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                        navController.navigate(NavRoute.Calendar(nextMonth)) {
+                            popUpTo<NavRoute.Calendar> { inclusive = true }
                         }
                     }
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = navigateToPrevMonth,
                         onSwipeForward = navigateToNextMonth,
                         swipeThreshold = 50f,
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.calendar.CalendarScreen(
+                        CalendarScreen(
                             uiState = uiState,
                             onPrev = navigateToPrevMonth,
                             onNext = navigateToNextMonth,
-                            onSelect = { date -> navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryPreview(date)) },
-                            onGoalPreview = { yearMonth -> navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalPreview(yearMonth)) },
+                            onSelect = { date -> navController.navigate(NavRoute.DiaryPreview(date)) },
+                            onGoalPreview = { yearMonth -> navController.navigate(NavRoute.GoalPreview(yearMonth)) },
                         )
                     }
                 }
 
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalPreview> { backStackEntry ->
-                    val route = backStackEntry.toRoute<io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalPreview>()
+                composable<NavRoute.GoalPreview> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.GoalPreview>()
                     val yearMonth = route.yearMonth
 
-                    val goalPreviewViewModel: io.github.t45k.githubDiary.ui.goal.preview.GoalPreviewViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                    val goalPreviewViewModel: GoalPreviewViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
 
                     val uiState by goalPreviewViewModel.uiState.collectAsState()
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = { navController.popBackStack() },
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.goal.preview.GoalPreviewScreen(
+                        GoalPreviewScreen(
                             uiState = uiState,
                             onBack = { navController.popBackStack() },
-                            onEdit = { navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalEdit(yearMonth)) },
+                            onEdit = { navController.navigate(NavRoute.GoalEdit(yearMonth)) },
                         )
                     }
                 }
 
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalEdit> { backStackEntry ->
-                    val route = backStackEntry.toRoute<io.github.t45k.githubDiary.ui.navigation.NavRoute.GoalEdit>()
+                composable<NavRoute.GoalEdit> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.GoalEdit>()
                     val yearMonth = route.yearMonth
 
-                    val viewModel: io.github.t45k.githubDiary.ui.goal.edit.GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                    val viewModel: GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
                     val uiState by viewModel.uiState.collectAsState()
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = { navController.popBackStack() },
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.goal.edit.GoalEditScreen(
+                        GoalEditScreen(
                             uiState,
                             goBack = { navController.popBackStack() },
                             completeGoal = { viewModel.completeGoal(it) },
@@ -170,8 +167,8 @@ fun AppScreen() {
                             updateBackMoney = viewModel::updateBack,
                             save = {
                                 viewModel.save {
-                                    navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(yearMonth)) {
-                                        popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                                    navController.navigate(NavRoute.Calendar(yearMonth)) {
+                                        popUpTo<NavRoute.Calendar> { inclusive = true }
                                     }
                                 }
                             },
@@ -179,33 +176,33 @@ fun AppScreen() {
                     }
                 }
 
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryPreview> { backStackEntry ->
-                    val route = backStackEntry.toRoute<io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryPreview>()
+                composable<NavRoute.DiaryPreview> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.DiaryPreview>()
                     val date = route.date
 
-                    val previewViewModel: io.github.t45k.githubDiary.ui.diary.preview.PreviewViewModel = koinViewModel(
+                    val previewViewModel: PreviewViewModel = koinViewModel(
                         key = date.toString(),
                     ) { parametersOf(date) }
 
                     val uiState by previewViewModel.uiState.collectAsState()
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = { navController.popBackStack() },
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.diary.preview.PreviewScreen(
+                        PreviewScreen(
                             uiState = uiState,
                             onBack = { navController.popBackStack() },
-                            onEdit = { navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryEdit(date)) },
+                            onEdit = { navController.navigate(NavRoute.DiaryEdit(date)) },
                         )
                     }
                 }
 
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryEdit> { backStackEntry ->
-                    val route = backStackEntry.toRoute<io.github.t45k.githubDiary.ui.navigation.NavRoute.DiaryEdit>()
+                composable<NavRoute.DiaryEdit> { backStackEntry ->
+                    val route = backStackEntry.toRoute<NavRoute.DiaryEdit>()
                     val date = route.date
 
-                    val editViewModel: io.github.t45k.githubDiary.ui.diary.edit.EditViewModel = koinViewModel(
+                    val editViewModel: EditViewModel = koinViewModel(
                         key = date.toString(),
                     ) {
                         parametersOf(date)
@@ -213,19 +210,19 @@ fun AppScreen() {
 
                     val uiState by editViewModel.uiState.collectAsState()
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = { navController.popBackStack() },
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.diary.edit.EditScreen(
+                        EditScreen(
                             uiState = uiState,
                             onBack = { navController.popBackStack() },
                             onContentChange = { editViewModel.updateContent(it) },
                             onSave = {
                                 editViewModel.save { success, _ ->
                                     if (success) {
-                                        navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(date.yearMonth)) {
-                                            popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                                        navController.navigate(NavRoute.Calendar(date.yearMonth)) {
+                                            popUpTo<NavRoute.Calendar> { inclusive = true }
                                         }
                                     }
                                 }
@@ -234,22 +231,22 @@ fun AppScreen() {
                     }
                 }
 
-                composable<io.github.t45k.githubDiary.ui.navigation.NavRoute.Settings> {
+                composable<NavRoute.Settings> {
                     val uiState by settingsViewModel.uiState.collectAsState()
 
-                    _root_ide_package_.io.github.t45k.githubDiary.ui.component.SwipeNavigationContainer(
+                    SwipeNavigationContainer(
                         onSwipeBack = { navController.popBackStack() },
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        _root_ide_package_.io.github.t45k.githubDiary.ui.settings.SettingsScreen(
+                        SettingsScreen(
                             uiState = uiState,
                             onTokenChange = { settingsViewModel.updateToken(it) },
                             onRepoChange = { settingsViewModel.updateRepo(it) },
                             onSave = {
                                 settingsViewModel.save { success, _ ->
                                     if (success) {
-                                        navController.navigate(_root_ide_package_.io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar(dateProvider.currentYearMonth())) {
-                                            popUpTo<io.github.t45k.githubDiary.ui.navigation.NavRoute.Calendar> { inclusive = true }
+                                        navController.navigate(NavRoute.Calendar(dateProvider.currentYearMonth())) {
+                                            popUpTo<NavRoute.Calendar> { inclusive = true }
                                         }
                                     }
                                 }
