@@ -1,10 +1,9 @@
-package ui.edit
+package ui.diary.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import core.entity.DiaryContent
 import core.repository.DiaryRepository
-import core.time.DateProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,12 +32,16 @@ sealed class EditUiState {
 
 class EditViewModel(
     private val diaryRepository: DiaryRepository,
-    dateProvider: DateProvider,
+    date: LocalDate,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<EditUiState>(EditUiState.Loading(dateProvider.today()))
+    private val _uiState = MutableStateFlow<EditUiState>(EditUiState.Loading(date))
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
 
-    fun load(date: LocalDate) {
+    init {
+        load(date)
+    }
+
+    private fun load(date: LocalDate) {
         viewModelScope.launch {
             _uiState.value = EditUiState.Loading(date)
 
@@ -46,13 +49,13 @@ class EditViewModel(
                 val diaryContent = diaryRepository.findByDate(date)
                 _uiState.value = EditUiState.Editing(
                     date = date,
-                    content = diaryContent.content
+                    content = diaryContent.content,
                 )
             } catch (e: Exception) {
                 _uiState.value = EditUiState.Error(
                     date = date,
                     content = "",
-                    message = e.message ?: "Failed to load"
+                    message = e.message ?: "Failed to load",
                 )
             }
         }
@@ -65,7 +68,7 @@ class EditViewModel(
         } else if (currentState is EditUiState.Error) {
             _uiState.value = EditUiState.Editing(
                 date = currentState.date,
-                content = value
+                content = value,
             )
         }
     }
@@ -85,7 +88,7 @@ class EditViewModel(
                 _uiState.value = EditUiState.Error(
                     date = currentState.date,
                     content = currentState.content,
-                    message = e.message ?: "Failed to save"
+                    message = e.message ?: "Failed to save",
                 )
                 onSaved(false, e.message)
             }

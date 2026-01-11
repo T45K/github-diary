@@ -1,4 +1,4 @@
-package ui.preview
+package ui.diary.preview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,12 +30,16 @@ sealed class PreviewUiState {
 
 class PreviewViewModel(
     private val diaryRepository: DiaryRepository,
-    initialDate: LocalDate,
+    date: LocalDate,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<PreviewUiState>(PreviewUiState.Loading(initialDate))
+    private val _uiState = MutableStateFlow<PreviewUiState>(PreviewUiState.Loading(date))
     val uiState: StateFlow<PreviewUiState> = _uiState.asStateFlow()
 
-    fun load(date: LocalDate) {
+    init {
+        load(date)
+    }
+
+    private fun load(date: LocalDate) {
         viewModelScope.launch {
             _uiState.value = PreviewUiState.Loading(date)
 
@@ -47,13 +51,13 @@ class PreviewViewModel(
                 } else {
                     _uiState.value = PreviewUiState.Success(
                         date = date,
-                        content = diaryContent.content
+                        content = diaryContent.content,
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = PreviewUiState.Error(
                     date = date,
-                    message = e.message ?: "Unknown error"
+                    message = e.message ?: "Unknown error",
                 )
             }
         }

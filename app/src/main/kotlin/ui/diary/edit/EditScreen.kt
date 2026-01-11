@@ -1,4 +1,4 @@
-package ui.edit
+package ui.diary.edit
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +43,6 @@ fun EditScreen(
 ) {
     val canSave = when (uiState) {
         is EditUiState.Editing -> !uiState.isSaving
-        is EditUiState.Error -> true
         else -> false
     }
 
