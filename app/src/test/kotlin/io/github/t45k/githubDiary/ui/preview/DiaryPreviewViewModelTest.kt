@@ -4,6 +4,8 @@ import io.github.t45k.githubDiary.core.entity.DiaryContent
 import io.github.t45k.githubDiary.core.repository.DiaryRepository
 import io.github.t45k.githubDiary.core.repository.GitHubClient
 import io.github.t45k.githubDiary.core.repository.SettingRepository
+import io.github.t45k.githubDiary.ui.diary.preview.PreviewUiState
+import io.github.t45k.githubDiary.ui.diary.preview.PreviewViewModel
 import kotlin.io.path.createTempFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,8 +17,6 @@ import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import ui.diary.preview.PreviewUiState
-import ui.diary.preview.PreviewViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DiaryPreviewViewModelTest {

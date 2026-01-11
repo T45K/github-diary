@@ -4,6 +4,8 @@ import io.github.t45k.githubDiary.core.entity.DiaryContent
 import io.github.t45k.githubDiary.core.repository.DiaryRepository
 import io.github.t45k.githubDiary.core.repository.GitHubClient
 import io.github.t45k.githubDiary.core.repository.SettingRepository
+import io.github.t45k.githubDiary.ui.diary.edit.EditUiState
+import io.github.t45k.githubDiary.ui.diary.edit.EditViewModel
 import kotlin.io.path.createTempFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,8 +17,6 @@ import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import ui.diary.edit.EditUiState
-import ui.diary.edit.EditViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DiaryEditViewModelTest {
@@ -41,7 +41,7 @@ class DiaryEditViewModelTest {
         // when
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
-            date = date
+            date = date,
         )
         val state = viewModel.uiState.value
 
@@ -56,13 +56,13 @@ class DiaryEditViewModelTest {
         val date = LocalDate(2026, 1, 15)
         val expectedContent = "# 2026/01/15 (Thu)\n\nLoaded content"
         val fakeRepo = FakeDiaryRepository(
-            diaryContent = DiaryContent(date, expectedContent)
+            diaryContent = DiaryContent(date, expectedContent),
         )
 
         // when
         val viewModel = EditViewModel(
             diaryRepository = fakeRepo,
-            date = date
+            date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         val state = viewModel.uiState.value
@@ -81,7 +81,7 @@ class DiaryEditViewModelTest {
         val date = LocalDate(2026, 1, 2)
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
-            date = date
+            date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -100,7 +100,7 @@ class DiaryEditViewModelTest {
         val date = LocalDate(2026, 1, 2)
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
-            date = date
+            date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateContent("Content to save")
@@ -120,7 +120,7 @@ class DiaryEditViewModelTest {
         val date = LocalDate(2026, 1, 2)
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
-            date = date
+            date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateContent("Content to save")
@@ -141,7 +141,7 @@ class DiaryEditViewModelTest {
         val date = LocalDate(2026, 1, 2)
         val viewModel = EditViewModel(
             diaryRepository = FakeDiaryRepository(),
-            date = date
+            date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateContent("Content")
@@ -157,10 +157,10 @@ class DiaryEditViewModelTest {
 }
 
 private class FakeDiaryRepository(
-    private val diaryContent: DiaryContent = DiaryContent.init(LocalDate(2026, 1, 2))
+    private val diaryContent: DiaryContent = DiaryContent.init(LocalDate(2026, 1, 2)),
 ) : DiaryRepository(
     client = FakeGitHubClient(),
-    settingRepository = FakeSettingRepository()
+    settingRepository = FakeSettingRepository(),
 ) {
     var savedDiary: DiaryContent? = null
 
@@ -174,5 +174,5 @@ private class FakeGitHubClient : GitHubClient()
 
 private class FakeSettingRepository : SettingRepository(
     settingFilePath = createTempFile(),
-    gitHubClient = FakeGitHubClient()
+    gitHubClient = FakeGitHubClient(),
 )
