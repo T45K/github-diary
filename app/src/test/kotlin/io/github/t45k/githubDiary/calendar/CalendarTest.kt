@@ -1,6 +1,5 @@
 package io.github.t45k.githubDiary.calendar
 
-import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import org.junit.jupiter.api.Test
@@ -8,7 +7,7 @@ import org.junit.jupiter.api.Test
 class CalendarTest {
 
     @Test
-    fun `init creates calendar with all dates in month`() = runTest {
+    suspend fun `init creates calendar with all dates in month`() {
         // given
         val yearMonth = YearMonth(2026, 1)
 
@@ -22,7 +21,7 @@ class CalendarTest {
     }
 
     @Test
-    fun `init calls checkContent for each date`() = runTest {
+    suspend fun `init calls checkContent for each date`() {
         // given
         val yearMonth = YearMonth(2026, 2)
         val checkedDates = mutableListOf<LocalDate>()
@@ -38,7 +37,7 @@ class CalendarTest {
     }
 
     @Test
-    fun `init preserves hasContent result for each date`() = runTest {
+    suspend fun `init preserves hasContent result for each date`() {
         // given
         val yearMonth = YearMonth(2026, 1)
         val datesWithContent = setOf(
@@ -63,7 +62,7 @@ class CalendarTest {
     }
 
     @Test
-    fun `init handles leap year February`() = runTest {
+    suspend fun `init handles leap year February`() {
         // given
         val yearMonth = YearMonth(2024, 2)
 
