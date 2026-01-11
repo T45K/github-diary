@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.t45k.githubDiary.ui.common.LoadingBox
 import io.github.t45k.githubDiary.util.yearMonthSlashFormat
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
@@ -41,11 +41,7 @@ fun CalendarScreen(
             .background(MaterialTheme.colors.surface),
     ) {
         when (uiState) {
-            is CalendarUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Loading...", color = MaterialTheme.colors.onSurface)
-                }
-            }
+            is CalendarUiState.Loading -> LoadingBox()
 
             is CalendarUiState.Error -> {
                 CalendarHeader(
@@ -70,7 +66,6 @@ fun CalendarScreen(
                     onGoalPreview = onGoalPreview,
                 )
                 CalendarContent(
-                    yearMonth = uiState.yearMonth,
                     calendar = uiState.calendar,
                     onSelect = onSelect,
                 )
@@ -100,7 +95,7 @@ private fun CalendarHeader(
             color = MaterialTheme.colors.onSurface,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onGoalPreview(yearMonth) }) { Text("ゴール") }
+            Button(onClick = { onGoalPreview(yearMonth) }) { Text("Goal") }
             Button(onClick = onPrev) { Text("<") }
             Button(onClick = onNext) { Text(">") }
         }
@@ -109,12 +104,18 @@ private fun CalendarHeader(
 
 @Composable
 private fun CalendarContent(
-    yearMonth: YearMonth,
     calendar: Calendar,
     onSelect: (LocalDate) -> Unit,
 ) {
+    DaysOfWeek()
+    Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
+    CalendarDays(calendar, onSelect)
+}
+
+@Composable
+private fun DaysOfWeek() {
     Row(modifier = Modifier.fillMaxWidth()) {
-        listOf("日", "月", "火", "水", "木", "金", "土").forEachIndexed { index, day ->
+        listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEachIndexed { index, day ->
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
@@ -132,26 +133,16 @@ private fun CalendarContent(
             }
         }
     }
+}
 
-    Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
-
-    val firstDay = yearMonth.firstDay
-    val offset = if (firstDay.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDay.dayOfWeek.ordinal + 1
-
-    val daysList = mutableListOf<CalendarDay?>()
-    repeat(offset) { daysList.add(null) }
-    daysList += calendar.days
-    while (daysList.size % 7 != 0) {
-        daysList.add(null)
-    }
-
-    val weeks = daysList.chunked(7)
+@Composable
+private fun CalendarDays(calendar: Calendar, onSelect: (LocalDate) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
-        weeks.forEach { week ->
+        calendar.weeks().forEach { week ->
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 week.forEachIndexed { index, day ->
                     if (day == null) {
-                        SpacerCell(Modifier.weight(1f).fillMaxHeight())
+                        EmptyDayCell(Modifier.weight(1f).fillMaxHeight())
                     } else {
                         DayCell(
                             day = day,
@@ -214,6 +205,6 @@ private fun DayCell(
 }
 
 @Composable
-private fun SpacerCell(modifier: Modifier = Modifier) {
+private fun EmptyDayCell(modifier: Modifier = Modifier) {
     Box(modifier = modifier)
 }
