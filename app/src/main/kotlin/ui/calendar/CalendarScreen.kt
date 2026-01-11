@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.format
+import kotlinx.datetime.format.char
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
@@ -32,6 +35,7 @@ fun CalendarScreen(
     uiState: CalendarUiState,
     onPrev: () -> Unit,
     onNext: () -> Unit,
+    onGoalPreview: (YearMonth) -> Unit,
     onSelect: (LocalDate) -> Unit,
 ) {
     Column(
@@ -48,10 +52,10 @@ fun CalendarScreen(
 
             is CalendarUiState.Error -> {
                 CalendarHeader(
-                    year = uiState.year,
-                    month = uiState.month,
+                    yearMonth = YearMonth(uiState.year, uiState.month),
                     onPrev = onPrev,
                     onNext = onNext,
+                    onGoalPreview = { _ -> },
                 )
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -63,10 +67,10 @@ fun CalendarScreen(
 
             is CalendarUiState.Success -> {
                 CalendarHeader(
-                    year = uiState.year,
-                    month = uiState.month,
+                    yearMonth = YearMonth(uiState.year, uiState.month),
                     onPrev = onPrev,
                     onNext = onNext,
+                    onGoalPreview = onGoalPreview,
                 )
                 CalendarContent(
                     year = uiState.year,
@@ -81,10 +85,10 @@ fun CalendarScreen(
 
 @Composable
 private fun CalendarHeader(
-    year: Int,
-    month: Int,
+    yearMonth: YearMonth,
     onPrev: () -> Unit,
     onNext: () -> Unit,
+    onGoalPreview: (yearMonth: YearMonth) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -94,14 +98,15 @@ private fun CalendarHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "${year}年 ${month}月",
+            text = yearMonth.format(YearMonth.Format { year(); char('/'); monthNumber() }),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colors.onSurface,
         )
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onGoalPreview(yearMonth) }) { Text("ゴール") }
             Button(onClick = onPrev) { Text("<") }
-            Button(onClick = onNext, modifier = Modifier.padding(start = 8.dp)) { Text(">") }
+            Button(onClick = onNext) { Text(">") }
         }
     }
 }
@@ -137,8 +142,8 @@ private fun CalendarContent(
 
     val firstDay = LocalDate(year, month, 1)
     val offset = if (firstDay.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDay.dayOfWeek.ordinal + 1
-    val lastDayOfMonth = firstDay.plus(DatePeriod(months = 1)).minus(DatePeriod(days = 1)).dayOfMonth
-    val sortedDays = days.associateBy { it.date.dayOfMonth }
+    val lastDayOfMonth = firstDay.plus(DatePeriod(months = 1)).minus(DatePeriod(days = 1)).day
+    val sortedDays = days.associateBy { it.date.day }
 
     val daysList = mutableListOf<DayItem?>()
     repeat(offset) { daysList.add(null) }
@@ -191,7 +196,7 @@ private fun DayCell(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = day.date.dayOfMonth.toString(),
+                text = day.date.day.toString(),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = when {
