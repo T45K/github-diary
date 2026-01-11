@@ -21,14 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.datetime.DatePeriod
+import io.github.t45k.githubDiary.util.yearMonthSlashFormat
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
-import kotlinx.datetime.format.char
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 
 @Composable
 fun CalendarScreen(
@@ -73,9 +70,8 @@ fun CalendarScreen(
                     onGoalPreview = onGoalPreview,
                 )
                 CalendarContent(
-                    year = uiState.year,
-                    month = uiState.month,
-                    days = uiState.days,
+                    yearMonth = uiState.yearMonth,
+                    calendar = uiState.calendar,
                     onSelect = onSelect,
                 )
             }
@@ -98,7 +94,7 @@ private fun CalendarHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = yearMonth.format(YearMonth.Format { year(); char('/'); monthNumber() }),
+            text = yearMonth.format(yearMonthSlashFormat),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colors.onSurface,
@@ -113,9 +109,8 @@ private fun CalendarHeader(
 
 @Composable
 private fun CalendarContent(
-    year: Int,
-    month: Int,
-    days: List<DayItem>,
+    yearMonth: YearMonth,
+    calendar: Calendar,
     onSelect: (LocalDate) -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
@@ -140,17 +135,12 @@ private fun CalendarContent(
 
     Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
 
-    val firstDay = LocalDate(year, month, 1)
+    val firstDay = yearMonth.firstDay
     val offset = if (firstDay.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDay.dayOfWeek.ordinal + 1
-    val lastDayOfMonth = firstDay.plus(DatePeriod(months = 1)).minus(DatePeriod(days = 1)).day
-    val sortedDays = days.associateBy { it.date.day }
 
-    val daysList = mutableListOf<DayItem?>()
+    val daysList = mutableListOf<CalendarDay?>()
     repeat(offset) { daysList.add(null) }
-    for (dayNumber in 1..lastDayOfMonth) {
-        val date = LocalDate(year, month, dayNumber)
-        daysList.add(sortedDays[dayNumber] ?: DayItem(date = date, exists = false))
-    }
+    daysList += calendar.days
     while (daysList.size % 7 != 0) {
         daysList.add(null)
     }
@@ -180,14 +170,14 @@ private fun CalendarContent(
 
 @Composable
 private fun DayCell(
-    day: DayItem,
+    day: CalendarDay,
     isSunday: Boolean,
     isSaturday: Boolean,
     modifier: Modifier = Modifier,
     onSelect: (LocalDate) -> Unit,
 ) {
     Box(
-        modifier = modifier.clickable { onSelect(day.date) },
+        modifier = modifier.clickable { onSelect(day.first) },
     ) {
         Column(
             modifier = Modifier
@@ -196,7 +186,7 @@ private fun DayCell(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = day.date.day.toString(),
+                text = day.first.day.toString(),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = when {
@@ -205,7 +195,7 @@ private fun DayCell(
                     else -> MaterialTheme.colors.onSurface
                 },
             )
-            if (day.exists) {
+            if (day.second) {
                 Box(
                     modifier = Modifier
                         .padding(top = 4.dp)

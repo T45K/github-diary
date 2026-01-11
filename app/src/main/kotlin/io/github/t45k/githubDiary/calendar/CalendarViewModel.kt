@@ -41,7 +41,7 @@ class CalendarViewModel(
         viewModelScope.launch {
             val calendar = calendarRepository.findByMonth(yearMonth)
 
-            if (calendar.dates.isEmpty()) {
+            if (calendar.days.isEmpty()) {
                 _uiState.value = CalendarUiState.Error(
                     yearMonth,
                     message = "Failed to load",
