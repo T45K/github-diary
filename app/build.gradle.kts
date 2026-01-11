@@ -2,9 +2,11 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
 
 plugins {
     kotlin("jvm") version "2.3.0"
+    kotlin("plugin.power-assert") version "2.3.0"
 
     kotlin("plugin.compose") version "2.3.0"
     id("org.jetbrains.compose") version "1.10.0-rc02"
+    id("org.jetbrains.compose.hot-reload") version "1.1.0-alpha03"
 
     kotlin("plugin.serialization") version "2.3.0"
 }
@@ -33,7 +35,6 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:3.3.3")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC")
-    implementation("org.jetbrains:markdown:0.7.3")
 
     implementation("ch.qos.logback:logback-classic:1.5.23")
 
