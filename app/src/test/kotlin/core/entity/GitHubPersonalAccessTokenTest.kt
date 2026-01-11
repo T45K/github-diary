@@ -1,29 +1,43 @@
 package core.entity
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class GitHubPersonalAccessTokenTest {
 
     @Test
     fun `value class stores token value`() {
-        val token = GitHubPersonalAccessToken("ghp_xxxxxxxxxxxx")
+        // given
+        val tokenValue = "ghp_xxxxxxxxxxxx"
 
-        assertEquals("ghp_xxxxxxxxxxxx", token.value)
+        // when
+        val token = GitHubPersonalAccessToken(tokenValue)
+
+        // then
+        assert(token.value == "ghp_xxxxxxxxxxxx")
     }
 
     @Test
     fun `two tokens with same value are equal`() {
+        // given
         val token1 = GitHubPersonalAccessToken("ghp_test")
         val token2 = GitHubPersonalAccessToken("ghp_test")
 
-        assertEquals(token1, token2)
+        // when
+        val areEqual = token1 == token2
+
+        // then
+        assert(areEqual)
     }
 
     @Test
     fun `token can be empty string`() {
-        val token = GitHubPersonalAccessToken("")
+        // given
+        val emptyValue = ""
 
-        assertEquals("", token.value)
+        // when
+        val token = GitHubPersonalAccessToken(emptyValue)
+
+        // then
+        assert(token.value == "")
     }
 }

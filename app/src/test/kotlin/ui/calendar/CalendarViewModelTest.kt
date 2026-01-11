@@ -15,9 +15,6 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -38,17 +35,23 @@ class CalendarViewModelTest {
 
     @Test
     fun `initial state is Loading`() {
+        // given
         val viewModel = CalendarViewModel(
             calendarRepository = FakeCalendarRepository(),
             initialYear = 2026,
             initialMonth = 1
         )
 
-        assertTrue(viewModel.uiState.value is CalendarUiState.Loading)
+        // when
+        val state = viewModel.uiState.value
+
+        // then
+        assert(state is CalendarUiState.Loading)
     }
 
     @Test
     fun `after loading, state becomes Success with days`() = runTest {
+        // given
         val fakeRepo = FakeCalendarRepository(
             returnCalendar = Calendar(
                 listOf(
@@ -63,20 +66,23 @@ class CalendarViewModelTest {
             initialMonth = 1
         )
 
+        // when
         testDispatcher.scheduler.advanceUntilIdle()
-
         val state = viewModel.uiState.value
-        assertTrue(state is CalendarUiState.Success)
+
+        // then
+        assert(state is CalendarUiState.Success)
         val successState = state as CalendarUiState.Success
-        assertEquals(2026, successState.year)
-        assertEquals(1, successState.month)
-        assertEquals(2, successState.days.size)
-        assertTrue(successState.days[0].exists)
-        assertFalse(successState.days[1].exists)
+        assert(successState.year == 2026)
+        assert(successState.month == 1)
+        assert(successState.days.size == 2)
+        assert(successState.days[0].exists == true)
+        assert(successState.days[1].exists == false)
     }
 
     @Test
     fun `state becomes Error when calendar is empty`() = runTest {
+        // given
         val fakeRepo = FakeCalendarRepository(returnCalendar = Calendar(emptyList()))
         val viewModel = CalendarViewModel(
             calendarRepository = fakeRepo,
@@ -84,18 +90,21 @@ class CalendarViewModelTest {
             initialMonth = 1
         )
 
+        // when
         testDispatcher.scheduler.advanceUntilIdle()
-
         val state = viewModel.uiState.value
-        assertTrue(state is CalendarUiState.Error)
+
+        // then
+        assert(state is CalendarUiState.Error)
         val errorState = state as CalendarUiState.Error
-        assertEquals(2026, errorState.year)
-        assertEquals(1, errorState.month)
-        assertEquals("Failed to load", errorState.message)
+        assert(errorState.year == 2026)
+        assert(errorState.month == 1)
+        assert(errorState.message == "Failed to load")
     }
 
     @Test
     fun `Success state has correct year and month`() = runTest {
+        // given
         val fakeRepo = FakeCalendarRepository(
             returnCalendar = Calendar(
                 listOf(LocalDate(2026, 6, 15) to true)
@@ -107,13 +116,15 @@ class CalendarViewModelTest {
             initialMonth = 6
         )
 
+        // when
         testDispatcher.scheduler.advanceUntilIdle()
-
         val state = viewModel.uiState.value
-        assertTrue(state is CalendarUiState.Success)
+
+        // then
+        assert(state is CalendarUiState.Success)
         val successState = state as CalendarUiState.Success
-        assertEquals(2026, successState.year)
-        assertEquals(6, successState.month)
+        assert(successState.year == 2026)
+        assert(successState.month == 6)
     }
 }
 

@@ -5,43 +5,47 @@ import core.entity.GitHubRepositoryPath
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class CalendarRepositoryTest {
 
     @Test
     fun `findByMonth returns empty calendar when no credentials`() = runTest {
+        // given
         val settingRepo = CalendarRepoFakeSettingRepository(loadResult = null to null)
         val gitHubClient = CalendarRepoFakeGitHubClient()
         val calendarRepository = CalendarRepository(gitHubClient, settingRepo)
-
         val yearMonth = YearMonth(2026, 1)
+
+        // when
         val result = calendarRepository.findByMonth(yearMonth)
 
-        assertTrue(result.dates.isEmpty())
+        // then
+        assert(result.dates.isEmpty())
     }
 
     @Test
     fun `findByMonth returns calendar with all days when credentials exist`() = runTest {
+        // given
         val settingRepo = CalendarRepoFakeSettingRepository(
             loadResult = GitHubPersonalAccessToken("token") to GitHubRepositoryPath("owner", "repo")
         )
         val gitHubClient = CalendarRepoFakeGitHubClient(contentExists = false)
         val calendarRepository = CalendarRepository(gitHubClient, settingRepo)
-
         val yearMonth = YearMonth(2026, 1)
+
+        // when
         val result = calendarRepository.findByMonth(yearMonth)
 
-        assertEquals(31, result.dates.size)
-        assertEquals(LocalDate(2026, 1, 1), result.dates.first().first)
-        assertEquals(LocalDate(2026, 1, 31), result.dates.last().first)
+        // then
+        assert(result.dates.size == 31)
+        assert(result.dates.first().first == LocalDate(2026, 1, 1))
+        assert(result.dates.last().first == LocalDate(2026, 1, 31))
     }
 
     @Test
     fun `findByMonth marks dates with content as true`() = runTest {
+        // given
         val datesWithContent = setOf(
             LocalDate(2026, 1, 5),
             LocalDate(2026, 1, 15)
@@ -51,45 +55,53 @@ class CalendarRepositoryTest {
         )
         val gitHubClient = CalendarRepoFakeGitHubClient(datesWithContent = datesWithContent)
         val calendarRepository = CalendarRepository(gitHubClient, settingRepo)
-
         val yearMonth = YearMonth(2026, 1)
+
+        // when
         val result = calendarRepository.findByMonth(yearMonth)
 
+        // then
         val day5 = result.dates.find { it.first == LocalDate(2026, 1, 5) }
         val day15 = result.dates.find { it.first == LocalDate(2026, 1, 15) }
         val day1 = result.dates.find { it.first == LocalDate(2026, 1, 1) }
 
-        assertTrue(day5!!.second)
-        assertTrue(day15!!.second)
-        assertFalse(day1!!.second)
+        assert(day5!!.second == true)
+        assert(day15!!.second == true)
+        assert(day1!!.second == false)
     }
 
     @Test
     fun `findByMonth handles February correctly`() = runTest {
+        // given
         val settingRepo = CalendarRepoFakeSettingRepository(
             loadResult = GitHubPersonalAccessToken("token") to GitHubRepositoryPath("owner", "repo")
         )
         val gitHubClient = CalendarRepoFakeGitHubClient(contentExists = false)
         val calendarRepository = CalendarRepository(gitHubClient, settingRepo)
-
         val yearMonth = YearMonth(2026, 2)
+
+        // when
         val result = calendarRepository.findByMonth(yearMonth)
 
-        assertEquals(28, result.dates.size)
+        // then
+        assert(result.dates.size == 28)
     }
 
     @Test
     fun `findByMonth handles leap year February correctly`() = runTest {
+        // given
         val settingRepo = CalendarRepoFakeSettingRepository(
             loadResult = GitHubPersonalAccessToken("token") to GitHubRepositoryPath("owner", "repo")
         )
         val gitHubClient = CalendarRepoFakeGitHubClient(contentExists = false)
         val calendarRepository = CalendarRepository(gitHubClient, settingRepo)
-
         val yearMonth = YearMonth(2024, 2)
+
+        // when
         val result = calendarRepository.findByMonth(yearMonth)
 
-        assertEquals(29, result.dates.size)
+        // then
+        assert(result.dates.size == 29)
     }
 }
 

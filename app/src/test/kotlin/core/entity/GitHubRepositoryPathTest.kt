@@ -1,47 +1,70 @@
 package core.entity
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class GitHubRepositoryPathTest {
 
     @Test
     fun `invoke returns Right with valid path format`() {
-        val result = GitHubRepositoryPath("owner/repo")
+        // given
+        val pathString = "owner/repo"
 
-        assertTrue(result.isRight())
+        // when
+        val result = GitHubRepositoryPath(pathString)
+
+        // then
+        assert(result.isRight())
         result.onRight {
-            assertEquals("owner", it.owner)
-            assertEquals("repo", it.name)
+            assert(it.owner == "owner")
+            assert(it.name == "repo")
         }
     }
 
     @Test
     fun `invoke returns Left with invalid path format - no slash`() {
-        val result = GitHubRepositoryPath("invalidpath")
+        // given
+        val pathString = "invalidpath"
 
-        assertTrue(result.isLeft())
+        // when
+        val result = GitHubRepositoryPath(pathString)
+
+        // then
+        assert(result.isLeft())
     }
 
     @Test
     fun `invoke returns Left with invalid path format - too many slashes`() {
-        val result = GitHubRepositoryPath("owner/repo/extra")
+        // given
+        val pathString = "owner/repo/extra"
 
-        assertTrue(result.isLeft())
+        // when
+        val result = GitHubRepositoryPath(pathString)
+
+        // then
+        assert(result.isLeft())
     }
 
     @Test
     fun `invoke returns Left with empty string`() {
-        val result = GitHubRepositoryPath("")
+        // given
+        val pathString = ""
 
-        assertTrue(result.isLeft())
+        // when
+        val result = GitHubRepositoryPath(pathString)
+
+        // then
+        assert(result.isLeft())
     }
 
     @Test
     fun `toString returns owner slash name format`() {
+        // given
         val path = GitHubRepositoryPath("myowner", "myrepo")
 
-        assertEquals("myowner/myrepo", path.toString())
+        // when
+        val result = path.toString()
+
+        // then
+        assert(result == "myowner/myrepo")
     }
 }

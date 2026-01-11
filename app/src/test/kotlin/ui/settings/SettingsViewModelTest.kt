@@ -11,9 +11,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -34,138 +31,164 @@ class SettingsViewModelTest {
 
     @Test
     fun `initial state is Loading`() {
+        // given & when
         val viewModel = SettingsViewModel(FakeSettingRepository())
 
-        assertTrue(viewModel.uiState.value is SettingsUiState.Loading)
+        // then
+        assert(viewModel.uiState.value is SettingsUiState.Loading)
     }
 
     @Test
     fun `state becomes Ready with values from repository`() = runTest {
+        // given
         val fakeRepo = FakeSettingRepository(
             loadResult = GitHubPersonalAccessToken("saved-token") to GitHubRepositoryPath("owner", "repo")
         )
+
+        // when
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
-
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
+
+        // then
+        assert(state is SettingsUiState.Ready)
         val readyState = state as SettingsUiState.Ready
-        assertEquals("saved-token", readyState.token)
-        assertEquals("owner/repo", readyState.repo)
+        assert(readyState.token == "saved-token")
+        assert(readyState.repo == "owner/repo")
     }
 
     @Test
     fun `state becomes Ready with empty values when repository returns null`() = runTest {
+        // given
         val fakeRepo = FakeSettingRepository(loadResult = null to null)
+
+        // when
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
-
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
+
+        // then
+        assert(state is SettingsUiState.Ready)
         val readyState = state as SettingsUiState.Ready
-        assertEquals("", readyState.token)
-        assertEquals("", readyState.repo)
+        assert(readyState.token == "")
+        assert(readyState.repo == "")
     }
 
     @Test
     fun `updateToken changes token in Ready state`() = runTest {
+        // given
         val viewModel = SettingsViewModel(FakeSettingRepository())
         testDispatcher.scheduler.advanceUntilIdle()
 
+        // when
         viewModel.updateToken("new-token")
-
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
-        assertEquals("new-token", (state as SettingsUiState.Ready).token)
+
+        // then
+        assert(state is SettingsUiState.Ready)
+        assert((state as SettingsUiState.Ready).token == "new-token")
     }
 
     @Test
     fun `updateRepo changes repo in Ready state`() = runTest {
+        // given
         val viewModel = SettingsViewModel(FakeSettingRepository())
         testDispatcher.scheduler.advanceUntilIdle()
 
+        // when
         viewModel.updateRepo("new-owner/new-repo")
-
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
-        assertEquals("new-owner/new-repo", (state as SettingsUiState.Ready).repo)
+
+        // then
+        assert(state is SettingsUiState.Ready)
+        assert((state as SettingsUiState.Ready).repo == "new-owner/new-repo")
     }
 
     @Test
     fun `save with invalid repo format shows error`() = runTest {
+        // given
         val viewModel = SettingsViewModel(FakeSettingRepository())
         testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.updateToken("token")
         viewModel.updateRepo("invalid-repo-format")
-
         var savedSuccess: Boolean? = null
+
+        // when
         viewModel.save { success, _ -> savedSuccess = success }
         testDispatcher.scheduler.advanceUntilIdle()
-
-        assertFalse(savedSuccess!!)
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
-        assertEquals("Invalid repository path format", (state as SettingsUiState.Ready).message)
+
+        // then
+        assert(savedSuccess == false)
+        assert(state is SettingsUiState.Ready)
+        assert((state as SettingsUiState.Ready).message == "Invalid repository path format")
     }
 
     @Test
     fun `save with invalid token permission shows error`() = runTest {
+        // given
         val fakeRepo = FakeSettingRepository(hasPermissionResult = false)
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.updateToken("invalid-token")
         viewModel.updateRepo("owner/repo")
-
         var savedSuccess: Boolean? = null
+
+        // when
         viewModel.save { success, _ -> savedSuccess = success }
         testDispatcher.scheduler.advanceUntilIdle()
-
-        assertFalse(savedSuccess!!)
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
-        assertEquals("Invalid token permission", (state as SettingsUiState.Ready).message)
+
+        // then
+        assert(savedSuccess == false)
+        assert(state is SettingsUiState.Ready)
+        assert((state as SettingsUiState.Ready).message == "Invalid token permission")
     }
 
     @Test
     fun `save with valid credentials succeeds`() = runTest {
+        // given
         val fakeRepo = FakeSettingRepository(hasPermissionResult = true)
         val viewModel = SettingsViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.updateToken("valid-token")
         viewModel.updateRepo("owner/repo")
-
         var savedSuccess: Boolean? = null
+
+        // when
         viewModel.save { success, _ -> savedSuccess = success }
         testDispatcher.scheduler.advanceUntilIdle()
-
-        assertTrue(savedSuccess!!)
         val state = viewModel.uiState.value
-        assertTrue(state is SettingsUiState.Ready)
-        assertEquals("Saved", (state as SettingsUiState.Ready).message)
+
+        // then
+        assert(savedSuccess == true)
+        assert(state is SettingsUiState.Ready)
+        assert((state as SettingsUiState.Ready).message == "Saved")
     }
 
     @Test
     fun `save sets isSaving during operation`() = runTest {
+        // given
         val viewModel = SettingsViewModel(FakeSettingRepository(hasPermissionResult = true))
         testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.updateToken("token")
         viewModel.updateRepo("owner/repo")
 
+        // when
         viewModel.save()
-
         val stateDuring = viewModel.uiState.value
-        assertTrue(stateDuring is SettingsUiState.Ready)
-        assertTrue((stateDuring as SettingsUiState.Ready).isSaving)
 
+        // then
+        assert(stateDuring is SettingsUiState.Ready)
+        assert((stateDuring as SettingsUiState.Ready).isSaving == true)
+
+        // when
         testDispatcher.scheduler.advanceUntilIdle()
-
         val stateAfter = viewModel.uiState.value
-        assertTrue(stateAfter is SettingsUiState.Ready)
-        assertFalse((stateAfter as SettingsUiState.Ready).isSaving)
+
+        // then
+        assert(stateAfter is SettingsUiState.Ready)
+        assert((stateAfter as SettingsUiState.Ready).isSaving == false)
     }
 }
 

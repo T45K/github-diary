@@ -17,15 +17,13 @@ import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class GitHubClientTest {
 
     @Test
     fun `getContent returns ContentFile on success`() = runTest {
+        // given
         val mockEngine = MockEngine { _ ->
             respond(
                 content = """{"sha": "abc123", "content": "SGVsbG8gV29ybGQ="}""",
@@ -33,26 +31,27 @@ class GitHubClientTest {
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             )
         }
-
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-
         val gitHubClient = GitHubClientTestable(client)
         val token = GitHubPersonalAccessToken("test-token")
         val pathParam = GitHubContentApiPathParam("owner", "repo", "path/to/file.md")
 
+        // when
         val result = gitHubClient.getContent(token, pathParam)
 
-        assertNotNull(result)
-        assertEquals("abc123", result?.sha)
-        assertEquals("SGVsbG8gV29ybGQ=", result?.content)
+        // then
+        assert(result != null)
+        assert(result?.sha == "abc123")
+        assert(result?.content == "SGVsbG8gV29ybGQ=")
     }
 
     @Test
     fun `getContent returns null on NotFound`() = runTest {
+        // given
         val mockEngine = MockEngine { _ ->
             respond(
                 content = """{"message": "Not Found"}""",
@@ -60,24 +59,25 @@ class GitHubClientTest {
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             )
         }
-
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-
         val gitHubClient = GitHubClientTestable(client)
         val token = GitHubPersonalAccessToken("test-token")
         val pathParam = GitHubContentApiPathParam("owner", "repo", "nonexistent.md")
 
+        // when
         val result = gitHubClient.getContent(token, pathParam)
 
-        assertNull(result)
+        // then
+        assert(result == null)
     }
 
     @Test
     fun `getRepository returns response on success`() = runTest {
+        // given
         val mockEngine = MockEngine { _ ->
             respond(
                 content = """{"id": 12345}""",
@@ -85,24 +85,25 @@ class GitHubClientTest {
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             )
         }
-
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-
         val gitHubClient = GitHubClientTestable(client)
         val token = GitHubPersonalAccessToken("test-token")
 
+        // when
         val result = gitHubClient.getRepository(token, "owner", "repo")
 
-        assertNotNull(result)
-        assertEquals(12345L, result?.id)
+        // then
+        assert(result != null)
+        assert(result?.id == 12345L)
     }
 
     @Test
     fun `getRepository returns null on failure`() = runTest {
+        // given
         val mockEngine = MockEngine { _ ->
             respond(
                 content = """{"message": "Not Found"}""",
@@ -110,19 +111,19 @@ class GitHubClientTest {
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             )
         }
-
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-
         val gitHubClient = GitHubClientTestable(client)
         val token = GitHubPersonalAccessToken("test-token")
 
+        // when
         val result = gitHubClient.getRepository(token, "owner", "nonexistent")
 
-        assertNull(result)
+        // then
+        assert(result == null)
     }
 }
 
