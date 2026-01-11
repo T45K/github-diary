@@ -56,12 +56,12 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "io.github.t45k.githubDiary.MainKt"
 
         nativeDistributions {
             targetFormats(Dmg)
-            packageName = "github_diary"
-            packageVersion = "1.0.0"
+            packageName = "GitHub Diary"
+            packageVersion = "1.0.1"
 
             macOS {
                 bundleID = "io.github.t45k.github-diary"
