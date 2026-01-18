@@ -80,7 +80,7 @@ fun EditScreen(
                 }
 
                 is EditUiState.Editing -> {
-                    MarkdownEditor(uiState.content, onContentChange)
+                    MarkdownEditor(uiState.date, uiState.content, onContentChange)
 
                     Row(Modifier.padding(top = 12.dp)) {
                         Button(onClick = onSave, enabled = !uiState.isSaving) {

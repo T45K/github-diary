@@ -13,10 +13,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
 fun MarkdownEditor(
+    key: Any,
     initialText: String,
     updateText: (String) -> Unit,
 ) {
-    var textFieldValue by remember(initialText) {
+    var textFieldValue by remember(key) {
         mutableStateOf(TextFieldValue(initialText, selection = TextRange(initialText.length)))
     }
 
