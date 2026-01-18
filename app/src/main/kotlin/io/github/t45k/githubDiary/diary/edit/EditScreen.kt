@@ -30,9 +30,8 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import io.github.t45k.githubDiary.ui.common.MarkdownEditor
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 
@@ -81,33 +80,7 @@ fun EditScreen(
                 }
 
                 is EditUiState.Editing -> {
-                    var textFieldValue by remember(uiState.content) {
-                        mutableStateOf(TextFieldValue(uiState.content, selection = TextRange(uiState.content.length)))
-                    }
-
-                    OutlinedTextField(
-                        value = textFieldValue,
-                        onValueChange = { newTextFieldValue ->
-                            val newText = newTextFieldValue.text
-                            val processedText = when {
-                                newText.endsWith("- \n") -> newText.removeRange(newText.length - 3, newText.length)
-                                newText.contains(Regex("""^-\s.+\n$""", RegexOption.MULTILINE)) -> "$newText- "
-                                else -> newText
-                            }
-
-                            textFieldValue = if (processedText != newText) {
-                                TextFieldValue(
-                                    text = processedText,
-                                    selection = TextRange(processedText.length),
-                                )
-                            } else {
-                                newTextFieldValue
-                            }
-
-                            onContentChange(textFieldValue.text)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    MarkdownEditor(uiState.content, onContentChange)
 
                     Row(Modifier.padding(top = 12.dp)) {
                         Button(onClick = onSave, enabled = !uiState.isSaving) {
