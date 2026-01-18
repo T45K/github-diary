@@ -75,7 +75,7 @@ class CalendarTest {
     }
 
     @Test
-    suspend fun `weeks returns calendar will null`() {
+    suspend fun `weeks returns calendar layout with null padding`() {
         listOf(
             // null on both head and bottom
             YearMonth(2025, 12) to listOf(

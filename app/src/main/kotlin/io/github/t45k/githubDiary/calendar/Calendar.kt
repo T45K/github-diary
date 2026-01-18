@@ -21,10 +21,10 @@ data class Calendar(val yearMonth: YearMonth, val days: List<CalendarDay>) {
     }
 
     /**
-     * add null to head and bottom to format calendar from Sun to Sat
+     * add null to head and bottom as calendar layout from Sun to Sat
      */
     fun weeks(): List<List<CalendarDay?>> {
-        val dayOfWeek = yearMonth.firstDay.dayOfWeek // isoDayNumber is 1: Mon, ..., 7: Sun
+        val dayOfWeek = yearMonth.firstDay.dayOfWeek // isoDayNumber, 1: Mon, ..., 7: Sun
         val headPadding = dayOfWeek.isoDayNumber % 7 // 0: Sun, ..., 6: Sat
         val bottomPadding = (35 - yearMonth.lastDay.day - headPadding) % 7
 
