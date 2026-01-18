@@ -5,8 +5,7 @@ plugins {
     kotlin("plugin.power-assert") version "2.3.0"
 
     kotlin("plugin.compose") version "2.3.0"
-    id("org.jetbrains.compose") version "1.10.0-rc02"
-    id("org.jetbrains.compose.hot-reload") version "1.1.0-alpha03"
+    id("org.jetbrains.compose") version "1.10.0"
 
     kotlin("plugin.serialization") version "2.3.0"
 }
