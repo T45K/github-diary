@@ -30,6 +30,8 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
@@ -79,13 +81,30 @@ fun EditScreen(
                 }
 
                 is EditUiState.Editing -> {
-                    var localText by remember(uiState.content) { mutableStateOf(uiState.content) }
+                    var textFieldValue by remember(uiState.content) {
+                        mutableStateOf(TextFieldValue(uiState.content, selection = TextRange(uiState.content.length)))
+                    }
 
                     OutlinedTextField(
-                        value = localText,
-                        onValueChange = {
-                            localText = it
-                            onContentChange(it)
+                        value = textFieldValue,
+                        onValueChange = { newTextFieldValue ->
+                            val newText = newTextFieldValue.text
+                            val processedText = when {
+                                newText.endsWith("- \n") -> newText.removeRange(newText.length - 3, newText.length)
+                                newText.contains(Regex("""^-\s.+\n$""", RegexOption.MULTILINE)) -> "$newText- "
+                                else -> newText
+                            }
+
+                            textFieldValue = if (processedText != newText) {
+                                TextFieldValue(
+                                    text = processedText,
+                                    selection = TextRange(processedText.length),
+                                )
+                            } else {
+                                newTextFieldValue
+                            }
+
+                            onContentChange(textFieldValue.text)
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -107,7 +126,7 @@ fun EditScreen(
                     Text(
                         text = "Error: ${uiState.message}",
                         color = MaterialTheme.colors.error,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
 
                     OutlinedTextField(
