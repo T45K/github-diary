@@ -1,12 +1,13 @@
 package io.github.t45k.githubDiary.ui
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.number
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface NavRoute {
+sealed interface NavRoute : NavKey {
     @Serializable
     data class Calendar(val year: Int, val month: Int) : NavRoute {
         constructor(yearMonth: YearMonth) : this(yearMonth.year, yearMonth.month.number)

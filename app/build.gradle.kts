@@ -22,7 +22,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
-    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-alpha15")
+    implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0-alpha01")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")

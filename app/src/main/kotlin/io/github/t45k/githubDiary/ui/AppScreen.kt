@@ -1,7 +1,5 @@
 package io.github.t45k.githubDiary.ui
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,12 +13,12 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import io.github.t45k.githubDiary.calendar.CalendarScreen
 import io.github.t45k.githubDiary.calendar.CalendarViewModel
 import io.github.t45k.githubDiary.diary.edit.EditScreen
@@ -43,11 +41,8 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppScreen() {
-    val navController = rememberNavController()
-
     val dateProvider: DateProvider = koinInject()
-
-    val settingsViewModel: SettingsViewModel = koinInject()
+    val backStack = remember { mutableStateListOf<NavRoute>(NavRoute.Calendar(dateProvider.currentYearMonth())) }
 
     Scaffold(
         topBar = {
@@ -60,14 +55,13 @@ fun AppScreen() {
                 ) {
                     Button(
                         onClick = {
-                            navController.navigate(NavRoute.Calendar(dateProvider.currentYearMonth())) {
-                                popUpTo<NavRoute.Calendar> { inclusive = true }
-                            }
+                            backStack.clear()
+                            backStack.add(NavRoute.Calendar(dateProvider.currentYearMonth()))
                         },
                     ) { Text("今日") }
 
                     Button(
-                        onClick = { navController.navigate(NavRoute.Settings) },
+                        onClick = { backStack.add(NavRoute.Settings) },
                         modifier = Modifier.padding(start = 8.dp),
                     ) {
                         Text("設定")
@@ -77,184 +71,161 @@ fun AppScreen() {
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            NavHost(
-                navController = navController,
-                startDestination = NavRoute.Calendar(dateProvider.currentYearMonth()),
-                enterTransition = { EnterTransition.None },
-                exitTransition = { ExitTransition.None },
-                popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None },
-            ) {
-                composable<NavRoute.Calendar> { backStackEntry ->
-                    val route = backStackEntry.toRoute<NavRoute.Calendar>()
-                    val yearMonth = route.yearMonth
+            NavDisplay(
+                backStack = backStack,
+                onBack = { backStack.removeLastOrNull() },
+                entryProvider = entryProvider {
+                    entry<NavRoute.Calendar> { key ->
+                        val yearMonth = key.yearMonth
+                        val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val uiState by calendarViewModel.uiState.collectAsState()
 
-                    val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val navigateToPrevMonth: () -> Unit = {
+                            val prevMonth = yearMonth.minusMonth()
+                            backStack.clear()
+                            backStack.add(NavRoute.Calendar(prevMonth))
+                        }
+                        val navigateToNextMonth: () -> Unit = {
+                            val nextMonth = yearMonth.plusMonth()
+                            backStack.clear()
+                            backStack.add(NavRoute.Calendar(nextMonth))
+                        }
 
-                    val uiState by calendarViewModel.uiState.collectAsState()
-
-                    val navigateToPrevMonth = {
-                        val prevMonth = yearMonth.minusMonth()
-                        navController.navigate(NavRoute.Calendar(prevMonth)) {
-                            popUpTo<NavRoute.Calendar> { inclusive = true }
+                        SwipeNavigationContainer(
+                            onSwipeBack = navigateToPrevMonth,
+                            onSwipeForward = navigateToNextMonth,
+                            swipeThreshold = 50f,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            CalendarScreen(
+                                uiState = uiState,
+                                onPrev = navigateToPrevMonth,
+                                onNext = navigateToNextMonth,
+                                onSelect = { date -> backStack.add(NavRoute.DiaryPreview(date)) },
+                                onGoalPreview = { yearMonth -> backStack.add(NavRoute.GoalPreview(yearMonth)) },
+                            )
                         }
                     }
-                    val navigateToNextMonth = {
-                        val nextMonth = yearMonth.plusMonth()
-                        navController.navigate(NavRoute.Calendar(nextMonth)) {
-                            popUpTo<NavRoute.Calendar> { inclusive = true }
+
+                    entry<NavRoute.GoalPreview> { key ->
+                        val yearMonth = key.yearMonth
+                        val goalPreviewViewModel: GoalPreviewViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val uiState by goalPreviewViewModel.uiState.collectAsState()
+
+                        SwipeNavigationContainer(
+                            onSwipeBack = { backStack.removeLastOrNull() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            GoalPreviewScreen(
+                                uiState = uiState,
+                                onBack = { backStack.removeLastOrNull() },
+                                onEdit = { backStack.add(NavRoute.GoalEdit(yearMonth)) },
+                            )
                         }
                     }
 
-                    SwipeNavigationContainer(
-                        onSwipeBack = navigateToPrevMonth,
-                        onSwipeForward = navigateToNextMonth,
-                        swipeThreshold = 50f,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        CalendarScreen(
-                            uiState = uiState,
-                            onPrev = navigateToPrevMonth,
-                            onNext = navigateToNextMonth,
-                            onSelect = { date -> navController.navigate(NavRoute.DiaryPreview(date)) },
-                            onGoalPreview = { yearMonth -> navController.navigate(NavRoute.GoalPreview(yearMonth)) },
-                        )
-                    }
-                }
+                    entry<NavRoute.GoalEdit> { key ->
+                        val yearMonth = key.yearMonth
+                        val viewModel: GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val uiState by viewModel.uiState.collectAsState()
 
-                composable<NavRoute.GoalPreview> { backStackEntry ->
-                    val route = backStackEntry.toRoute<NavRoute.GoalPreview>()
-                    val yearMonth = route.yearMonth
-
-                    val goalPreviewViewModel: GoalPreviewViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
-
-                    val uiState by goalPreviewViewModel.uiState.collectAsState()
-
-                    SwipeNavigationContainer(
-                        onSwipeBack = { navController.popBackStack() },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        GoalPreviewScreen(
-                            uiState = uiState,
-                            onBack = { navController.popBackStack() },
-                            onEdit = { navController.navigate(NavRoute.GoalEdit(yearMonth)) },
-                        )
-                    }
-                }
-
-                composable<NavRoute.GoalEdit> { backStackEntry ->
-                    val route = backStackEntry.toRoute<NavRoute.GoalEdit>()
-                    val yearMonth = route.yearMonth
-
-                    val viewModel: GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
-                    val uiState by viewModel.uiState.collectAsState()
-
-                    SwipeNavigationContainer(
-                        onSwipeBack = { navController.popBackStack() },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        GoalEditScreen(
-                            uiState,
-                            goBack = { navController.popBackStack() },
-                            completeGoal = { viewModel.completeGoal(it) },
-                            incompleteGoal = { viewModel.incompleteGoal(it) },
-                            updateGoalContent = { index, goal -> viewModel.updateGoal(goal, index) },
-                            removeGoal = { viewModel.removeGoal(it) },
-                            addGoal = viewModel::addGoal,
-                            syncLastMoney = viewModel::syncLast,
-                            updateLastMoney = viewModel::updateLast,
-                            updateFrontMoney = viewModel::updateFront,
-                            updateBackMoney = viewModel::updateBack,
-                            save = {
-                                viewModel.save {
-                                    navController.navigate(NavRoute.Calendar(yearMonth)) {
-                                        popUpTo<NavRoute.Calendar> { inclusive = true }
+                        SwipeNavigationContainer(
+                            onSwipeBack = { backStack.removeLastOrNull() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            GoalEditScreen(
+                                uiState,
+                                goBack = { backStack.removeLastOrNull() },
+                                completeGoal = { viewModel.completeGoal(it) },
+                                incompleteGoal = { viewModel.incompleteGoal(it) },
+                                updateGoalContent = { index, goal -> viewModel.updateGoal(goal, index) },
+                                removeGoal = { viewModel.removeGoal(it) },
+                                addGoal = viewModel::addGoal,
+                                syncLastMoney = viewModel::syncLast,
+                                updateLastMoney = viewModel::updateLast,
+                                updateFrontMoney = viewModel::updateFront,
+                                updateBackMoney = viewModel::updateBack,
+                                save = {
+                                    viewModel.save {
+                                        backStack.clear()
+                                        backStack.add(NavRoute.Calendar(yearMonth))
                                     }
-                                }
-                            },
-                        )
-                    }
-                }
-
-                composable<NavRoute.DiaryPreview> { backStackEntry ->
-                    val route = backStackEntry.toRoute<NavRoute.DiaryPreview>()
-                    val date = route.date
-
-                    val previewViewModel: PreviewViewModel = koinViewModel(
-                        key = date.toString(),
-                    ) { parametersOf(date) }
-
-                    val uiState by previewViewModel.uiState.collectAsState()
-
-                    SwipeNavigationContainer(
-                        onSwipeBack = { navController.popBackStack() },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        PreviewScreen(
-                            uiState = uiState,
-                            onBack = { navController.popBackStack() },
-                            onEdit = { navController.navigate(NavRoute.DiaryEdit(date)) },
-                        )
-                    }
-                }
-
-                composable<NavRoute.DiaryEdit> { backStackEntry ->
-                    val route = backStackEntry.toRoute<NavRoute.DiaryEdit>()
-                    val date = route.date
-
-                    val editViewModel: EditViewModel = koinViewModel(
-                        key = date.toString(),
-                    ) {
-                        parametersOf(date)
+                                },
+                            )
+                        }
                     }
 
-                    val uiState by editViewModel.uiState.collectAsState()
+                    entry<NavRoute.DiaryPreview> { key ->
+                        val date = key.date
 
-                    SwipeNavigationContainer(
-                        onSwipeBack = { navController.popBackStack() },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        EditScreen(
-                            uiState = uiState,
-                            onBack = { navController.popBackStack() },
-                            onContentChange = { editViewModel.updateContent(it) },
-                            onSave = {
-                                editViewModel.save { success, _ ->
-                                    if (success) {
-                                        navController.navigate(NavRoute.Calendar(date.yearMonth)) {
-                                            popUpTo<NavRoute.Calendar> { inclusive = true }
+                        val previewViewModel: PreviewViewModel = koinViewModel(
+                            key = date.toString(),
+                        ) { parametersOf(date) }
+
+                        val uiState by previewViewModel.uiState.collectAsState()
+
+                        SwipeNavigationContainer(
+                            onSwipeBack = { backStack.removeLastOrNull() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            PreviewScreen(
+                                uiState = uiState,
+                                onBack = { backStack.removeLastOrNull() },
+                                onEdit = { backStack.add(NavRoute.DiaryEdit(date)) },
+                            )
+                        }
+                    }
+
+                    entry<NavRoute.DiaryEdit> { key ->
+                        val date = key.date
+                        val editViewModel: EditViewModel = koinViewModel(key = date.toString()) { parametersOf(date) }
+                        val uiState by editViewModel.uiState.collectAsState()
+
+                        SwipeNavigationContainer(
+                            onSwipeBack = { backStack.removeLastOrNull() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            EditScreen(
+                                uiState = uiState,
+                                onBack = { backStack.removeLastOrNull() },
+                                onContentChange = { editViewModel.updateContent(it) },
+                                onSave = {
+                                    editViewModel.save { success, _ ->
+                                        if (success) {
+                                            backStack.clear()
+                                            backStack.add(NavRoute.Calendar(date.yearMonth))
                                         }
                                     }
-                                }
-                            },
-                        )
+                                },
+                            )
+                        }
                     }
-                }
 
-                composable<NavRoute.Settings> {
-                    val uiState by settingsViewModel.uiState.collectAsState()
+                    entry<NavRoute.Settings> {
+                        val settingsViewModel: SettingsViewModel = koinViewModel()
+                        val uiState by settingsViewModel.uiState.collectAsState()
 
-                    SwipeNavigationContainer(
-                        onSwipeBack = { navController.popBackStack() },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        SettingsScreen(
-                            uiState = uiState,
-                            onTokenChange = { settingsViewModel.updateToken(it) },
-                            onRepoChange = { settingsViewModel.updateRepo(it) },
-                            onSave = {
-                                settingsViewModel.save { success, _ ->
-                                    if (success) {
-                                        navController.navigate(NavRoute.Calendar(dateProvider.currentYearMonth())) {
-                                            popUpTo<NavRoute.Calendar> { inclusive = true }
+                        SwipeNavigationContainer(
+                            onSwipeBack = { backStack.removeLastOrNull() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            SettingsScreen(
+                                uiState = uiState,
+                                onTokenChange = { settingsViewModel.updateToken(it) },
+                                onRepoChange = { settingsViewModel.updateRepo(it) },
+                                onSave = {
+                                    settingsViewModel.save { success, _ ->
+                                        if (success) {
+                                            backStack.clear()
+                                            backStack.add(NavRoute.Calendar(dateProvider.currentYearMonth()))
                                         }
                                     }
-                                }
-                            },
-                        )
+                                },
+                            )
+                        }
                     }
-                }
-            }
+                },
+            )
         }
     }
 }
