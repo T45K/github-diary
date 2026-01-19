@@ -22,4 +22,3 @@ plugins {
 
 rootProject.name = "github_diary"
 include(":app")
-include(":androidApp")
