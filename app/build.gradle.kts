@@ -120,8 +120,11 @@ compose.desktop {
             packageName = "GitHub Diary"
             packageVersion = "1.0.1"
 
+            modules("java.instrument", "java.naming", "java.prefs", "java.sql", "jdk.unsupported")
+
             macOS {
                 bundleID = "io.github.t45k.github-diary"
+                dockName = "GitHub Diary"
             }
         }
     }
