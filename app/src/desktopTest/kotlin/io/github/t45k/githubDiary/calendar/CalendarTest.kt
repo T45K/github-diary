@@ -108,6 +108,15 @@ class CalendarTest {
                 listOf(15, 16, 17, 18, 19, 20, 21),
                 listOf(22, 23, 24, 25, 26, 27, 28),
             ),
+            // 6 weeks
+            YearMonth(2025, 11) to listOf(
+                listOf(null, null, null, null, null, null, 1),
+                listOf(2, 3, 4, 5, 6, 7, 8),
+                listOf(9, 10, 11, 12, 13, 14, 15),
+                listOf(16, 17, 18, 19, 20, 21, 22),
+                listOf(23, 24, 25, 26, 27, 28, 29),
+                listOf(30, null, null, null, null, null, null),
+            ),
         ).forEach { (yearMonth, expected) ->
             // when
             val weeks = Calendar.init(yearMonth) { false }.weeks()

@@ -26,7 +26,7 @@ data class Calendar(val yearMonth: YearMonth, val days: List<CalendarDay>) {
     fun weeks(): List<List<CalendarDay?>> {
         val dayOfWeek = yearMonth.firstDay.dayOfWeek // isoDayNumber, 1: Mon, ..., 7: Sun
         val headPadding = dayOfWeek.isoDayNumber % 7 // 0: Sun, ..., 6: Sat
-        val bottomPadding = (35 - yearMonth.lastDay.day - headPadding) % 7
+        val bottomPadding = (42 - yearMonth.lastDay.day - headPadding) % 7
 
         return (List(headPadding) { null } + days + List(bottomPadding) { null }).chunked(7)
     }
