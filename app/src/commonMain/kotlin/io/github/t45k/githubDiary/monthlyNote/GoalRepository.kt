@@ -23,7 +23,7 @@ open class GoalRepository(
             buildPathParam(repoPath, goal.yearMonth),
         )?.sha
 
-        val encodedContent = Base64.Default.encode(goal.content().toByteArray())
+        val encodedContent = Base64.Default.encode(goal.content().encodeToByteArray())
 
         client.putContent(
             accessToken,
@@ -45,7 +45,7 @@ open class GoalRepository(
             buildPathParam(repoPath, yearMonth),
         )
         val decodedContent = content?.content?.let { contentWithNewLines ->
-            String(Base64.Default.decode(contentWithNewLines.replace("\n", "").toByteArray()))
+            Base64.Default.decode(contentWithNewLines.replace("\n", "")).decodeToString()
         }
         return if (decodedContent == null) GoalContent.init(yearMonth) else GoalContent.parse(decodedContent)
     }

@@ -20,39 +20,43 @@ fun MarkdownEditor(
     var textFieldValue by remember(key) {
         mutableStateOf(TextFieldValue(initialText, selection = TextRange(initialText.length)))
     }
-    var lastKeyWasEnter by remember(key) { mutableStateOf(false) }
 
     OutlinedTextField(
         value = textFieldValue,
         onValueChange = { newTextFieldValue ->
+            val oldText = textFieldValue.text
             val newText = newTextFieldValue.text
-            val processedText = if (lastKeyWasEnter) {
+
+            val isNewlineInserted = newText.length == oldText.length + 1 &&
+                newText.endsWith("\n") &&
+                !oldText.endsWith("\n")
+
+            val processedTextFieldValue = if (isNewlineInserted && newTextFieldValue.composition == null) {
                 when {
-                    newText.endsWith("- \n") -> newText.dropLast(3)
-                    newText.endsWith("\n") -> {
-                        val lastLine = newText.dropLast(1).substringAfterLast("\n")
-                        if (lastLine.matches(Regex("""^- .+"""))) "$newText- " else newText
+                    newText.endsWith("- \n") -> {
+                        val text = newText.dropLast(3)
+                        TextFieldValue(text, selection = TextRange(text.length))
                     }
 
-                    else -> newText
+                    newText.endsWith("\n") -> {
+                        val lastLine = newText.dropLast(1).substringAfterLast("\n")
+                        if (lastLine.matches(Regex("""^- .+"""))) {
+                            val text = "$newText- "
+                            TextFieldValue(text, selection = TextRange(text.length))
+                        } else {
+                            newTextFieldValue
+                        }
+                    }
+
+                    else -> newTextFieldValue
                 }
             } else {
-                newText
+                newTextFieldValue
             }
 
-            lastKeyWasEnter = false
-
-            textFieldValue =
-                if (processedText == newText) newTextFieldValue
-                else TextFieldValue(
-                    text = processedText,
-                    selection = TextRange(processedText.length),
-                )
-
+            textFieldValue = processedTextFieldValue
             updateText(textFieldValue.text)
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .onEnterKeyDown { lastKeyWasEnter = true },
+        modifier = Modifier.fillMaxWidth(),
     )
 }

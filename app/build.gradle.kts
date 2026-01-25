@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     kotlin("multiplatform") version "2.3.0"
@@ -45,6 +46,16 @@ kotlin {
     androidTarget()
 
     jvm("desktop")
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    targets.withType<KotlinNativeTarget> {
+        binaries.framework {
+            baseName = "GitHubDiary"
+        }
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -94,6 +105,13 @@ kotlin {
             }
         }
 
+        val iosMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                implementation("io.ktor:ktor-client-darwin:3.3.3")
+            }
+        }
+
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
@@ -103,10 +121,38 @@ kotlin {
             }
         }
 
+        val iosX64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val iosArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
         val desktopTest by getting {
             dependencies {
                 implementation("org.junit.platform:junit-platform-launcher:6.0.2")
             }
+        }
+
+        val iosTest by creating {
+            dependsOn(commonTest)
+        }
+
+        val iosX64Test by getting {
+            dependsOn(iosTest)
+        }
+
+        val iosArm64Test by getting {
+            dependsOn(iosTest)
+        }
+
+        val iosSimulatorArm64Test by getting {
+            dependsOn(iosTest)
         }
     }
 }

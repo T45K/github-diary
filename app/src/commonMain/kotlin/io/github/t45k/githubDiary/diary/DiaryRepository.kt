@@ -23,7 +23,7 @@ open class DiaryRepository(
             buildPathParam(repoPath, diary.date),
         )?.sha
 
-        val encodedContent = Base64.Default.encode(diary.content.toByteArray())
+        val encodedContent = Base64.Default.encode(diary.content.encodeToByteArray())
 
         client.putContent(
             accessToken,
@@ -45,7 +45,7 @@ open class DiaryRepository(
             buildPathParam(repoPath, date),
         )
         val decodedContent = content?.content?.let { contentWithNewLines ->
-            String(Base64.Default.decode(contentWithNewLines.replace("\n", "").toByteArray()))
+            Base64.Default.decode(contentWithNewLines.replace("\n", "")).decodeToString()
         }
         return if (decodedContent == null) DiaryContent.init(date) else DiaryContent(date, decodedContent)
     }
