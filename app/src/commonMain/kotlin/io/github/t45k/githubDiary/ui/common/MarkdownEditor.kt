@@ -55,7 +55,9 @@ fun MarkdownEditor(
             }
 
             textFieldValue = processedTextFieldValue
-            updateText(textFieldValue.text)
+            if (processedTextFieldValue.composition == null) {
+                updateText(textFieldValue.text)
+            }
         },
         modifier = Modifier.fillMaxWidth(),
     )
