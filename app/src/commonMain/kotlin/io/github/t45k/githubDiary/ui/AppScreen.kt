@@ -50,7 +50,7 @@ import org.koin.core.parameter.parametersOf
 fun AppScreen() {
     val dateProvider: DateProvider = koinInject()
     val backStack = remember { mutableStateListOf<NavRoute>(NavRoute.Calendar(dateProvider.currentYearMonth())) }
-    val calendarRevisions = remember { mutableStateMapOf<String, Int>() }
+    val calendarRevisionByMonth = remember { mutableStateMapOf<String, Int>() }
 
     Scaffold(
         topBar = {
@@ -93,7 +93,7 @@ fun AppScreen() {
                 entryProvider = entryProvider {
                     entry<NavRoute.Calendar> { key ->
                         val yearMonth = key.yearMonth
-                        val calendarRevision = calendarRevisions[yearMonth.toString()] ?: 0
+                        val calendarRevision = calendarRevisionByMonth[yearMonth.toString()] ?: 0
                         val calendarViewModel: CalendarViewModel = koinViewModel(key = "${yearMonth}_$calendarRevision") { parametersOf(yearMonth) }
                         val uiState by calendarViewModel.uiState.collectAsState()
 
@@ -165,7 +165,7 @@ fun AppScreen() {
                                 save = {
                                     viewModel.save {
                                         val key = yearMonth.toString()
-                                        calendarRevisions[key] = (calendarRevisions[key] ?: 0) + 1
+                                        calendarRevisionByMonth[key] = (calendarRevisionByMonth[key] ?: 0) + 1
                                         backStack.clear()
                                         backStack.add(NavRoute.Calendar(yearMonth))
                                     }
@@ -212,7 +212,7 @@ fun AppScreen() {
                                     editViewModel.save { success, _ ->
                                         if (success) {
                                             val key = date.yearMonth.toString()
-                                            calendarRevisions[key] = (calendarRevisions[key] ?: 0) + 1
+                                            calendarRevisionByMonth[key] = (calendarRevisionByMonth[key] ?: 0) + 1
                                             backStack.clear()
                                             backStack.add(NavRoute.Calendar(date.yearMonth))
                                         }
