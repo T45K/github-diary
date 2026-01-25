@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -21,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -50,6 +50,7 @@ import org.koin.core.parameter.parametersOf
 fun AppScreen() {
     val dateProvider: DateProvider = koinInject()
     val backStack = remember { mutableStateListOf<NavRoute>(NavRoute.Calendar(dateProvider.currentYearMonth())) }
+    val calendarRevisions = remember { mutableStateMapOf<String, Int>() }
 
     Scaffold(
         topBar = {
@@ -92,7 +93,8 @@ fun AppScreen() {
                 entryProvider = entryProvider {
                     entry<NavRoute.Calendar> { key ->
                         val yearMonth = key.yearMonth
-                        val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val calendarRevision = calendarRevisions[yearMonth.toString()] ?: 0
+                        val calendarViewModel: CalendarViewModel = koinViewModel(key = "${yearMonth}_$calendarRevision") { parametersOf(yearMonth) }
                         val uiState by calendarViewModel.uiState.collectAsState()
 
                         val navigateToPrevMonth: () -> Unit = {
@@ -162,6 +164,8 @@ fun AppScreen() {
                                 updateBackMoney = viewModel::updateBack,
                                 save = {
                                     viewModel.save {
+                                        val key = yearMonth.toString()
+                                        calendarRevisions[key] = (calendarRevisions[key] ?: 0) + 1
                                         backStack.clear()
                                         backStack.add(NavRoute.Calendar(yearMonth))
                                     }
@@ -207,6 +211,8 @@ fun AppScreen() {
                                 onSave = {
                                     editViewModel.save { success, _ ->
                                         if (success) {
+                                            val key = date.yearMonth.toString()
+                                            calendarRevisions[key] = (calendarRevisions[key] ?: 0) + 1
                                             backStack.clear()
                                             backStack.add(NavRoute.Calendar(date.yearMonth))
                                         }
