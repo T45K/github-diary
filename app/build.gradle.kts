@@ -41,7 +41,10 @@ android {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+        vendor.set(JvmVendorSpec.ORACLE)
+    }
 
     androidTarget()
 
@@ -162,12 +165,11 @@ compose.desktop {
         mainClass = "io.github.t45k.githubDiary.MainKt"
 
         nativeDistributions {
-            javaHome = System.getProperty("java.home")
             targetFormats(Dmg)
             packageName = "GitHub Diary"
             packageVersion = "1.0.1"
 
-            modules("java.instrument", "java.management", "java.naming", "java.prefs", "java.sql", "jdk.unsupported")
+            modules("java.instrument", "java.management", "java.naming", "java.prefs", "java.sql", "jdk.unsupported", "java.xml")
 
             macOS {
                 bundleID = "io.github.t45k.github-diary"
