@@ -3,7 +3,6 @@ package io.github.t45k.githubDiary.ui.common
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,61 +13,63 @@ import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
 fun MarkdownEditor(
-    key: Any,
-    initialText: String,
-    updateText: (String) -> Unit,
+    text: String,
+    onValueChange: (String) -> Unit,
 ) {
-    var textFieldValue by remember(key) {
-        mutableStateOf(TextFieldValue(initialText, selection = TextRange(initialText.length)))
+    var textFieldValue by remember {
+        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
     }
 
-    LaunchedEffect(initialText) {
-        if (textFieldValue.text != initialText && textFieldValue.composition == null) {
-            textFieldValue = textFieldValue.copy(
-                text = initialText,
-                selection = TextRange(initialText.length),
-            )
-        }
+    if (textFieldValue.text != text) {
+        textFieldValue = textFieldValue.copy(text = text)
     }
 
     OutlinedTextField(
         value = textFieldValue,
-        onValueChange = { newTextFieldValue ->
-            val oldText = textFieldValue.text
-            val newText = newTextFieldValue.text
+        onValueChange = { newValue ->
+            val oldValue = textFieldValue
+            val processedValue = handleMarkdownList(oldValue, newValue)
 
-            val isNewlineInserted = newText.length == oldText.length + 1 &&
-                newText.endsWith("\n") &&
-                !oldText.endsWith("\n")
-
-            val processedTextFieldValue = if (isNewlineInserted && newTextFieldValue.composition == null) {
-                when {
-                    newText.endsWith("- \n") -> {
-                        val text = newText.dropLast(3)
-                        newTextFieldValue.copy(text = text, selection = TextRange(text.length))
-                    }
-
-                    newText.endsWith("\n") -> {
-                        val lastLine = newText.dropLast(1).substringAfterLast("\n")
-                        if (lastLine.matches(Regex("""^- .+"""))) {
-                            val text = "$newText- "
-                            newTextFieldValue.copy(text = text, selection = TextRange(text.length))
-                        } else {
-                            newTextFieldValue
-                        }
-                    }
-
-                    else -> newTextFieldValue
-                }
+            if (processedValue != newValue) {
+                textFieldValue = processedValue
+                onValueChange(processedValue.text)
             } else {
-                newTextFieldValue
-            }
-
-            textFieldValue = processedTextFieldValue
-            if (processedTextFieldValue.composition == null && processedTextFieldValue.text != initialText) {
-                updateText(processedTextFieldValue.text)
+                textFieldValue = newValue
+                if (newValue.text != oldValue.text) {
+                    onValueChange(newValue.text)
+                }
             }
         },
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+
+internal fun handleMarkdownList(oldValue: TextFieldValue, newValue: TextFieldValue): TextFieldValue {
+    val selectionLength = oldValue.selection.max - oldValue.selection.min
+    if (newValue.composition == null && newValue.text.length == oldValue.text.length - selectionLength + 1) {
+        val addedIndex = newValue.selection.start - 1
+        if (addedIndex >= 0 && addedIndex < newValue.text.length && newValue.text[addedIndex] == '\n') {
+            val textBeforeNewline = newValue.text.substring(0, addedIndex)
+            val lastLineStart = textBeforeNewline.lastIndexOf('\n') + 1
+            val lastLine = textBeforeNewline.substring(lastLineStart)
+
+            if (lastLine.startsWith("- ")) {
+                if (lastLine.trim() == "-") {
+                    // Case 2: Line was just "- ", remove it
+                    val newText = newValue.text.substring(0, lastLineStart) + newValue.text.substring(addedIndex)
+                    val newSelection = TextRange(lastLineStart + 1)
+                    return TextFieldValue(newText, newSelection)
+                } else {
+                    // Case 1: Line started with "- ", add it to next line
+                    val prefix = "- "
+                    val newText =
+                        newValue.text.substring(0, addedIndex + 1) + prefix + newValue.text.substring(addedIndex + 1)
+                    val newSelection = TextRange(addedIndex + 1 + prefix.length)
+                    return TextFieldValue(newText, newSelection)
+                }
+            }
+        }
+    }
+    return newValue
 }
