@@ -26,28 +26,28 @@ GitHub Diary is a Kotlin/Compose Desktop application that manages diary entries 
 ## Architecture
 
 ```
-app/src/main/kotlin/
-├── Main.kt                    # Entry point
-├── core/
-│   ├── entity/               # Domain models (Calendar, DiaryContent, GitHubPersonalAccessToken)
-│   ├── repository/           # Data access (GitHubClient, DiaryRepository, SettingRepository)
-│   └── time/                 # DateProvider (JST timezone)
-└── ui/
-    ├── AppScreen.kt          # Root composable with routing
-    ├── AppViewModel.kt       # Global state
-    ├── calendar/             # Calendar screen (month view)
-    ├── edit/                 # Diary editor
-    ├── preview/              # Markdown preview
-    ├── settings/             # Token/repo configuration
-    └── navigation/           # NavRoute enum
+app/src/commonMain/kotlin/io/github/t45k/githubDiary/
+├── Main.kt                    # (プラットフォーム別のエントリーポイント)
+├── calendar/                  # カレンダー画面 (月間表示、リポジトリ、ViewModel)
+├── diary/                     # 日記機能 (DiaryContent, リポジトリ, 編集/プレビュー)
+├── monthlyNote/               # 月間目標機能 (GoalContent, リポジトリ, 編集/プレビュー)
+├── setting/                   # 設定画面 (リポジトリ, ViewModel, ストレージ)
+├── github/                    # GitHub APIクライアント (GitHubClient, モデル)
+├── ui/                        # 共通UIコンポーネント、ナビゲーション
+│   ├── AppScreen.kt          # ルートComposable (Navigation3による画面遷移)
+│   ├── NavRoute.kt           # ナビゲーション定義
+│   └── common/               # 共通コンポーネント (エディタ等)
+├── util/                      # ユーティリティ (DateProvider, Format等)
+└── AppModule.kt               # Koin DI構成
 ```
 
 ## Key Patterns
 
-- **ViewModel per screen:** Each screen has a ViewModel extending `androidx.lifecycle.ViewModel` with `mutableStateOf` for Compose state
-- **Repository pattern:** `GitHubClient` handles REST API calls, repositories abstract data access
-- **Enum-based routing:** `NavRoute` enum manages navigation via `AppViewModel.currentRoute`
-- **Arrow Either:** Used in settings validation for functional error handling
+- **Screen-based ViewModel:** 各画面は `androidx.lifecycle.ViewModel` を継承したViewModelを持ち、`StateFlow` で Compose 状態を管理する
+- **Koin DI:** 依存性の注入に Koin を使用。ViewModel は `koinViewModel` で取得する
+- **Navigation3:** `AppScreen.kt` で `NavDisplay` と `backStack` (MutableStateList) を使用して画面遷移を管理する
+- **Repository pattern:** `GitHubClient` が REST API を叩き、各リポジトリがデータアクセスを抽象化する
+- **Arrow Either:** 設定のバリデーションや例外処理で `either` ブロックを使用する
 
 ## GitHub API Integration
 
