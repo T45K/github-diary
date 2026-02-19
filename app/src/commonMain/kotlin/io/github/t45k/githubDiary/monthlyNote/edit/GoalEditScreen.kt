@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
@@ -30,12 +32,15 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
@@ -87,6 +92,7 @@ fun GoalEditScreen(
         },
     ) { padding ->
         val scrollState = rememberScrollState()
+        val focusManager = LocalFocusManager.current
         Column(Modifier.padding(padding).padding(16.dp).verticalScroll(scrollState)) {
             when (uiState) {
                 is GoalEditUiState.Loading -> {
@@ -112,7 +118,17 @@ fun GoalEditScreen(
                                 OutlinedTextField(
                                     value = goal,
                                     onValueChange = { updateGoalContent(index, it) },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(1f).onPreviewKeyEvent {
+                                        if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+                                            focusManager.moveFocus(FocusDirection.Next)
+                                            true
+                                        } else {
+                                            false
+                                        }
+                                    },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
                                 )
                                 IconButton(onClick = { removeGoal(index) }) {
                                     Icon(
@@ -138,7 +154,17 @@ fun GoalEditScreen(
                             OutlinedTextField(
                                 value = uiState.goal.moneyInfo.last.toString(),
                                 onValueChange = { input -> input.toIntOrNull()?.let { updateLastMoney(it) } },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).onPreviewKeyEvent {
+                                    if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+                                        focusManager.moveFocus(FocusDirection.Next)
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
                             )
                             IconButton(onClick = { syncLastMoney() }) { Icon(Icons.Default.Refresh, contentDescription = "reload") }
                         }
@@ -147,7 +173,17 @@ fun GoalEditScreen(
                             OutlinedTextField(
                                 value = uiState.goal.moneyInfo.front.toString(),
                                 onValueChange = { input -> input.toIntOrNull()?.let { updateFrontMoney(it) } },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().onPreviewKeyEvent {
+                                    if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+                                        focusManager.moveFocus(FocusDirection.Next)
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -155,7 +191,17 @@ fun GoalEditScreen(
                             OutlinedTextField(
                                 value = uiState.goal.moneyInfo.back.toString(),
                                 onValueChange = { input -> input.toIntOrNull()?.let { updateBackMoney(it) } },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().onPreviewKeyEvent {
+                                    if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+                                        focusManager.moveFocus(FocusDirection.Next)
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
