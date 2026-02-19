@@ -1,5 +1,6 @@
 package io.github.t45k.githubDiary
 
+import io.github.t45k.githubDiary.calendar.CalendarRefreshEvent
 import io.github.t45k.githubDiary.calendar.CalendarRepository
 import io.github.t45k.githubDiary.calendar.CalendarViewModel
 import io.github.t45k.githubDiary.diary.DiaryRepository
@@ -22,6 +23,9 @@ val appModule = module {
     single { GitHubClient() }
     single { DateProvider() }
 
+    // Events
+    single { CalendarRefreshEvent() }
+
     // Repositories
     single { SettingRepository(gitHubClient = get()) }
     single { CalendarRepository(client = get(), settingRepository = get()) }
@@ -32,7 +36,7 @@ val appModule = module {
     single { SettingsViewModel(settingRepository = get()) }
 
     viewModel { (yearMonth: YearMonth) ->
-        CalendarViewModel(get(), yearMonth)
+        CalendarViewModel(get(), get(), yearMonth)
     }
 
     viewModel { (date: LocalDate) ->

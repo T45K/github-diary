@@ -26,6 +26,7 @@ sealed interface CalendarUiState {
 
 class CalendarViewModel(
     private val calendarRepository: CalendarRepository,
+    private val calendarRefreshEvent: CalendarRefreshEvent,
     yearMonth: YearMonth,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<CalendarUiState>(CalendarUiState.Loading(yearMonth))
@@ -33,6 +34,13 @@ class CalendarViewModel(
 
     init {
         load(yearMonth)
+        viewModelScope.launch {
+            calendarRefreshEvent.refreshRequest.collect { reload() }
+        }
+    }
+
+    fun reload() {
+        load(_uiState.value.yearMonth)
     }
 
     private fun load(yearMonth: YearMonth) {

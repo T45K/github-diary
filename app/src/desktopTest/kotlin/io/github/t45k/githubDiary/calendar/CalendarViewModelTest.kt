@@ -37,6 +37,7 @@ class CalendarViewModelTest {
         // given
         val viewModel = CalendarViewModel(
             calendarRepository = FakeCalendarRepository(),
+            calendarRefreshEvent = CalendarRefreshEvent(),
             yearMonth = YearMonth(2026, 1),
         )
 
@@ -61,6 +62,7 @@ class CalendarViewModelTest {
         )
         val viewModel = CalendarViewModel(
             calendarRepository = fakeRepo,
+            calendarRefreshEvent = CalendarRefreshEvent(),
             yearMonth = YearMonth(2026, 1),
         )
 
@@ -88,6 +90,7 @@ class CalendarViewModelTest {
         )
         val viewModel = CalendarViewModel(
             calendarRepository = fakeRepo,
+            calendarRefreshEvent = CalendarRefreshEvent(),
             yearMonth = YearMonth(2026, 1),
         )
 
@@ -113,6 +116,7 @@ class CalendarViewModelTest {
         )
         val viewModel = CalendarViewModel(
             calendarRepository = fakeRepo,
+            calendarRefreshEvent = CalendarRefreshEvent(),
             yearMonth = YearMonth(2026, 6),
         )
 

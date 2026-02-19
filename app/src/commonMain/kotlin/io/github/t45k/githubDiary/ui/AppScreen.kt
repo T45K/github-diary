@@ -20,12 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import io.github.t45k.githubDiary.calendar.CalendarRefreshEvent
 import io.github.t45k.githubDiary.calendar.CalendarScreen
 import io.github.t45k.githubDiary.calendar.CalendarViewModel
 import io.github.t45k.githubDiary.diary.edit.EditScreen
@@ -39,6 +39,7 @@ import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
 import io.github.t45k.githubDiary.setting.SettingsScreen
 import io.github.t45k.githubDiary.setting.SettingsViewModel
 import io.github.t45k.githubDiary.util.DateProvider
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
@@ -49,8 +50,13 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun AppScreen() {
     val dateProvider: DateProvider = koinInject()
+    val calendarRefreshEvent: CalendarRefreshEvent = koinInject()
     val backStack = remember { mutableStateListOf<NavRoute>(NavRoute.Calendar(dateProvider.currentYearMonth())) }
-    val calendarRevisionByMonth = remember { mutableStateMapOf<String, Int>() }
+
+    val navigateToCalendar: (YearMonth) -> Unit = { yearMonth ->
+        backStack.clear()
+        backStack.add(NavRoute.Calendar(yearMonth))
+    }
 
     Scaffold(
         topBar = {
@@ -64,10 +70,7 @@ fun AppScreen() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Button(
-                        onClick = {
-                            backStack.clear()
-                            backStack.add(NavRoute.Calendar(dateProvider.currentYearMonth()))
-                        },
+                        onClick = { navigateToCalendar(dateProvider.currentYearMonth()) },
                     ) { Text("今日") }
 
                     Button(
@@ -93,20 +96,11 @@ fun AppScreen() {
                 entryProvider = entryProvider {
                     entry<NavRoute.Calendar> { key ->
                         val yearMonth = key.yearMonth
-                        val calendarRevision = calendarRevisionByMonth[yearMonth.toString()] ?: 0
-                        val calendarViewModel: CalendarViewModel = koinViewModel(key = "${yearMonth}_$calendarRevision") { parametersOf(yearMonth) }
+                        val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
                         val uiState by calendarViewModel.uiState.collectAsState()
 
-                        val navigateToPrevMonth: () -> Unit = {
-                            val prevMonth = yearMonth.minusMonth()
-                            backStack.clear()
-                            backStack.add(NavRoute.Calendar(prevMonth))
-                        }
-                        val navigateToNextMonth: () -> Unit = {
-                            val nextMonth = yearMonth.plusMonth()
-                            backStack.clear()
-                            backStack.add(NavRoute.Calendar(nextMonth))
-                        }
+                        val navigateToPrevMonth: () -> Unit = { navigateToCalendar(yearMonth.minusMonth()) }
+                        val navigateToNextMonth: () -> Unit = { navigateToCalendar(yearMonth.plusMonth()) }
 
                         SwipeNavigationContainer(
                             onSwipeBack = navigateToPrevMonth,
@@ -164,10 +158,8 @@ fun AppScreen() {
                                 updateBackMoney = viewModel::updateBack,
                                 save = {
                                     viewModel.save {
-                                        val key = yearMonth.toString()
-                                        calendarRevisionByMonth[key] = (calendarRevisionByMonth[key] ?: 0) + 1
-                                        backStack.clear()
-                                        backStack.add(NavRoute.Calendar(yearMonth))
+                                        calendarRefreshEvent.requestRefresh()
+                                        navigateToCalendar(yearMonth)
                                     }
                                 },
                             )
@@ -211,10 +203,8 @@ fun AppScreen() {
                                 onSave = {
                                     editViewModel.save { success, _ ->
                                         if (success) {
-                                            val key = date.yearMonth.toString()
-                                            calendarRevisionByMonth[key] = (calendarRevisionByMonth[key] ?: 0) + 1
-                                            backStack.clear()
-                                            backStack.add(NavRoute.Calendar(date.yearMonth))
+                                            calendarRefreshEvent.requestRefresh()
+                                            navigateToCalendar(date.yearMonth)
                                         }
                                     }
                                 },
@@ -237,8 +227,7 @@ fun AppScreen() {
                                 onSave = {
                                     settingsViewModel.save { success, _ ->
                                         if (success) {
-                                            backStack.clear()
-                                            backStack.add(NavRoute.Calendar(dateProvider.currentYearMonth()))
+                                            navigateToCalendar(dateProvider.currentYearMonth())
                                         }
                                     }
                                 },
