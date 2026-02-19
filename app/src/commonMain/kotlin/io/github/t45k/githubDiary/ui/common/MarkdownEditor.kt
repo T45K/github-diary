@@ -14,14 +14,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 @Composable
 fun MarkdownEditor(
     text: String,
-    onValueChange: (String) -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
 ) {
-    var textFieldValue by remember {
+    var textFieldValue by remember(text) {
         mutableStateOf(TextFieldValue(text, TextRange(text.length)))
-    }
-
-    if (textFieldValue.text != text) {
-        textFieldValue = textFieldValue.copy(text = text)
     }
 
     OutlinedTextField(
@@ -30,14 +26,9 @@ fun MarkdownEditor(
             val oldValue = textFieldValue
             val processedValue = handleMarkdownList(oldValue, newValue)
 
-            if (processedValue != newValue) {
-                textFieldValue = processedValue
-                onValueChange(processedValue.text)
-            } else {
-                textFieldValue = newValue
-                if (newValue.text != oldValue.text) {
-                    onValueChange(newValue.text)
-                }
+            textFieldValue = processedValue
+            if (processedValue.text != oldValue.text || processedValue.selection != oldValue.selection) {
+                onValueChange(processedValue)
             }
         },
         modifier = Modifier.fillMaxWidth(),

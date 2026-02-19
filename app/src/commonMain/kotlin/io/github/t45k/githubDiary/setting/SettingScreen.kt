@@ -35,29 +35,20 @@ fun SettingsScreen(
         }
 
         is SettingsUiState.Ready -> {
-            var token by remember(uiState.token) { mutableStateOf(uiState.token) }
-            var repo by remember(uiState.repo) { mutableStateOf(uiState.repo) }
-
             Column(Modifier.padding(16.dp)) {
                 Spacer(Modifier.height(12.dp))
                 Text("Token")
                 OutlinedTextField(
-                    value = token,
-                    onValueChange = {
-                        token = it
-                        onTokenChange(it)
-                    },
+                    value = uiState.token,
+                    onValueChange = onTokenChange,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 Spacer(Modifier.height(12.dp))
                 Text("Repo (org/repo)")
                 OutlinedTextField(
-                    value = repo,
-                    onValueChange = {
-                        repo = it
-                        onRepoChange(it)
-                    },
+                    value = uiState.repo,
+                    onValueChange = onRepoChange,
                     modifier = Modifier.fillMaxWidth(),
                 )
 

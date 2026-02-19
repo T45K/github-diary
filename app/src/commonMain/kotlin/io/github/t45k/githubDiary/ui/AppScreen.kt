@@ -48,14 +48,15 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun AppScreen() {
+fun AppScreen(
+    viewModel: AppViewModel = koinViewModel()
+) {
     val dateProvider: DateProvider = koinInject()
     val calendarRefreshEvent: CalendarRefreshEvent = koinInject()
-    val backStack = remember { mutableStateListOf<NavRoute>(NavRoute.Calendar(dateProvider.currentYearMonth())) }
+    val backStack by viewModel.backStack.collectAsState()
 
     val navigateToCalendar: (YearMonth) -> Unit = { yearMonth ->
-        backStack.clear()
-        backStack.add(NavRoute.Calendar(yearMonth))
+        viewModel.navigateToCalendar(yearMonth)
     }
 
     Scaffold(
@@ -70,11 +71,11 @@ fun AppScreen() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Button(
-                        onClick = { navigateToCalendar(dateProvider.currentYearMonth()) },
+                        onClick = { viewModel.navigateToToday() },
                     ) { Text("今日") }
 
                     Button(
-                        onClick = { backStack.add(NavRoute.Settings) },
+                        onClick = { viewModel.push(NavRoute.Settings) },
                         modifier = Modifier.padding(start = 8.dp),
                     ) {
                         Text("設定")
@@ -92,7 +93,7 @@ fun AppScreen() {
         ) {
             NavDisplay(
                 backStack = backStack,
-                onBack = { backStack.removeLastOrNull() },
+                onBack = { viewModel.pop() },
                 entryProvider = entryProvider {
                     entry<NavRoute.Calendar> { key ->
                         val yearMonth = key.yearMonth
@@ -112,8 +113,8 @@ fun AppScreen() {
                                 uiState = uiState,
                                 onPrev = navigateToPrevMonth,
                                 onNext = navigateToNextMonth,
-                                onSelect = { date -> backStack.add(NavRoute.DiaryPreview(date)) },
-                                onGoalPreview = { yearMonth -> backStack.add(NavRoute.GoalPreview(yearMonth)) },
+                                onSelect = { date -> viewModel.push(NavRoute.DiaryPreview(date)) },
+                                onGoalPreview = { yearMonth -> viewModel.push(NavRoute.GoalPreview(yearMonth)) },
                             )
                         }
                     }
@@ -124,40 +125,40 @@ fun AppScreen() {
                         val uiState by goalPreviewViewModel.uiState.collectAsState()
 
                         SwipeNavigationContainer(
-                            onSwipeBack = { backStack.removeLastOrNull() },
+                            onSwipeBack = { viewModel.pop() },
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             GoalPreviewScreen(
                                 uiState = uiState,
-                                onBack = { backStack.removeLastOrNull() },
-                                onEdit = { backStack.add(NavRoute.GoalEdit(yearMonth)) },
+                                onBack = { viewModel.pop() },
+                                onEdit = { viewModel.push(NavRoute.GoalEdit(yearMonth)) },
                             )
                         }
                     }
 
                     entry<NavRoute.GoalEdit> { key ->
                         val yearMonth = key.yearMonth
-                        val viewModel: GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
-                        val uiState by viewModel.uiState.collectAsState()
+                        val goalEditViewModel: GoalEditViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
+                        val uiState by goalEditViewModel.uiState.collectAsState()
 
                         SwipeNavigationContainer(
-                            onSwipeBack = { backStack.removeLastOrNull() },
+                            onSwipeBack = { viewModel.pop() },
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             GoalEditScreen(
                                 uiState,
-                                goBack = { backStack.removeLastOrNull() },
-                                completeGoal = { viewModel.completeGoal(it) },
-                                incompleteGoal = { viewModel.incompleteGoal(it) },
-                                updateGoalContent = { index, goal -> viewModel.updateGoal(goal, index) },
-                                removeGoal = { viewModel.removeGoal(it) },
-                                addGoal = viewModel::addGoal,
-                                syncLastMoney = viewModel::syncLast,
-                                updateLastMoney = viewModel::updateLast,
-                                updateFrontMoney = viewModel::updateFront,
-                                updateBackMoney = viewModel::updateBack,
+                                goBack = { viewModel.pop() },
+                                completeGoal = { goalEditViewModel.completeGoal(it) },
+                                incompleteGoal = { goalEditViewModel.incompleteGoal(it) },
+                                updateGoalContent = { index, goal -> goalEditViewModel.updateGoal(goal, index) },
+                                removeGoal = { goalEditViewModel.removeGoal(it) },
+                                addGoal = goalEditViewModel::addGoal,
+                                syncLastMoney = goalEditViewModel::syncLast,
+                                updateLastMoney = goalEditViewModel::updateLast,
+                                updateFrontMoney = goalEditViewModel::updateFront,
+                                updateBackMoney = goalEditViewModel::updateBack,
                                 save = {
-                                    viewModel.save {
+                                    goalEditViewModel.save {
                                         calendarRefreshEvent.requestRefresh()
                                         navigateToCalendar(yearMonth)
                                     }
@@ -176,13 +177,13 @@ fun AppScreen() {
                         val uiState by previewViewModel.uiState.collectAsState()
 
                         SwipeNavigationContainer(
-                            onSwipeBack = { backStack.removeLastOrNull() },
+                            onSwipeBack = { viewModel.pop() },
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             PreviewScreen(
                                 uiState = uiState,
-                                onBack = { backStack.removeLastOrNull() },
-                                onEdit = { backStack.add(NavRoute.DiaryEdit(date)) },
+                                onBack = { viewModel.pop() },
+                                onEdit = { viewModel.push(NavRoute.DiaryEdit(date)) },
                             )
                         }
                     }
@@ -193,12 +194,12 @@ fun AppScreen() {
                         val uiState by editViewModel.uiState.collectAsState()
 
                         SwipeNavigationContainer(
-                            onSwipeBack = { backStack.removeLastOrNull() },
+                            onSwipeBack = { viewModel.pop() },
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             EditScreen(
                                 uiState = uiState,
-                                onBack = { backStack.removeLastOrNull() },
+                                onBack = { viewModel.pop() },
                                 onContentChange = { editViewModel.updateContent(it) },
                                 onSave = {
                                     editViewModel.save { success, _ ->
@@ -217,7 +218,7 @@ fun AppScreen() {
                         val uiState by settingsViewModel.uiState.collectAsState()
 
                         SwipeNavigationContainer(
-                            onSwipeBack = { backStack.removeLastOrNull() },
+                            onSwipeBack = { viewModel.pop() },
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             SettingsScreen(
