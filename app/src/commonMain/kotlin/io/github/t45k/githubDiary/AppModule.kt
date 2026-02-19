@@ -12,6 +12,7 @@ import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
 import io.github.t45k.githubDiary.setting.SettingRepository
 import io.github.t45k.githubDiary.setting.SettingsViewModel
+import io.github.t45k.githubDiary.ui.AppViewModel
 import io.github.t45k.githubDiary.util.DateProvider
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -33,7 +34,8 @@ val appModule = module {
     single { GoalRepository(client = get(), settingRepository = get()) }
 
     // ViewModels
-    single { SettingsViewModel(settingRepository = get()) }
+    viewModel { SettingsViewModel(settingRepository = get()) }
+    viewModel { AppViewModel(get()) }
 
     viewModel { (yearMonth: YearMonth) ->
         CalendarViewModel(get(), get(), yearMonth)
