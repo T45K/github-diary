@@ -106,6 +106,48 @@ class CalendarViewModelTest {
     }
 
     @Test
+    fun `refresh event triggers reload with updated data`() = runTest {
+        // given
+        val initialCalendar = Calendar(
+            yearMonth = YearMonth(2026, 1),
+            days = listOf(
+                LocalDate(2026, 1, 1) to false,
+                LocalDate(2026, 1, 2) to false,
+            ),
+        )
+        val updatedCalendar = Calendar(
+            yearMonth = YearMonth(2026, 1),
+            days = listOf(
+                LocalDate(2026, 1, 1) to true,
+                LocalDate(2026, 1, 2) to false,
+            ),
+        )
+        val fakeRepo = MutableFakeCalendarRepository(initialCalendar)
+        val refreshEvent = CalendarRefreshEvent()
+        val viewModel = CalendarViewModel(
+            calendarRepository = fakeRepo,
+            calendarRefreshEvent = refreshEvent,
+            yearMonth = YearMonth(2026, 1),
+        )
+
+        // initial load
+        testDispatcher.scheduler.advanceUntilIdle()
+        val initialState = viewModel.uiState.value
+        assert(initialState is CalendarUiState.Success)
+        assert((initialState as CalendarUiState.Success).calendar.days[0].second == false)
+
+        // when: update repo data and trigger refresh
+        fakeRepo.returnCalendar = updatedCalendar
+        refreshEvent.requestRefresh()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // then: state should reflect updated data
+        val updatedState = viewModel.uiState.value
+        assert(updatedState is CalendarUiState.Success)
+        assert((updatedState as CalendarUiState.Success).calendar.days[0].second == true)
+    }
+
+    @Test
     fun `Success state has correct yearMonth`() = runTest {
         // given
         val fakeRepo = FakeCalendarRepository(
@@ -129,6 +171,15 @@ class CalendarViewModelTest {
         val successState = state as CalendarUiState.Success
         assert(successState.yearMonth == YearMonth(2026, 6))
     }
+}
+
+private class MutableFakeCalendarRepository(
+    var returnCalendar: Calendar,
+) : CalendarRepository(
+    client = FakeGitHubClient(),
+    settingRepository = FakeSettingRepository(),
+) {
+    override suspend fun findByMonth(yearMonth: YearMonth): Calendar = returnCalendar
 }
 
 private class FakeCalendarRepository(
