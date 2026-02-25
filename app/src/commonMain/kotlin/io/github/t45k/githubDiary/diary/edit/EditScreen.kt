@@ -24,7 +24,6 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import io.github.t45k.githubDiary.ui.common.MarkdownEditor
 import kotlinx.datetime.LocalDate
@@ -34,7 +33,7 @@ import kotlinx.datetime.format
 fun EditScreen(
     uiState: EditUiState,
     onBack: () -> Unit,
-    onContentChange: (TextFieldValue) -> Unit,
+    onContentChange: (String) -> Unit,
     onSave: () -> Unit,
 ) {
     val canSave = when (uiState) {

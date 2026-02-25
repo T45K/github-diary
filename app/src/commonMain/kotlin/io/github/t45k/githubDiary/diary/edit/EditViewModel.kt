@@ -1,6 +1,5 @@
 package io.github.t45k.githubDiary.diary.edit
 
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.t45k.githubDiary.diary.DiaryContent
@@ -62,14 +61,14 @@ class EditViewModel(
         }
     }
 
-    fun updateContent(value: TextFieldValue) {
+    fun updateContent(value: String) {
         val currentState = _uiState.value
         if (currentState is EditUiState.Editing) {
-            _uiState.value = currentState.copy(content = value.text)
+            _uiState.value = currentState.copy(content = value)
         } else if (currentState is EditUiState.Error) {
             _uiState.value = EditUiState.Editing(
                 date = currentState.date,
-                content = value.text,
+                content = value,
             )
         }
     }
