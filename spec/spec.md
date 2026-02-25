@@ -57,7 +57,9 @@ USER -> This app (Desktop / Android / iOS) -(REST API)-> GitHub
 - 右側の「Save」ボタンを置き、それを押すと現在の内容を保存する
 - `Cmd+S` または `Cmd+Enter` のキーボードショートカットでも保存できる
 - GitHubと同程度の、マークダウンをサポートするエディタ機能をもつ
-  - 例えば、itemize (`-`)がある状態で改行すると、文頭に`- `が入る
+  - リスト自動継続: `- `で始まる行で改行すると、次の行にも`- `が自動挿入される
+  - リスト終了: `- `のみの行で改行すると、`- `が削除されリストが終了する
+- IME（日本語入力等）との互換性を保つため、TextFieldValueの状態管理はエディタコンポーネント（MarkdownEditor）内部で完結させ、外部とはString型のみでやり取りする
 - 保存には、PUT `https://api.github.com/repos/{owner}/{repo}/contents/{path}` を使用する
 - 保存する際には、`yyyy/MM/dd/README.md`というファイル名でmainブランチに保存する
 - コンフリクトが発生した際には、その旨をエラーメッセージとして表示する
