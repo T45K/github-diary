@@ -19,6 +19,6 @@ expect fun SwipeNavigationContainer(
     onSwipeBack: () -> Unit = {},
     onSwipeForward: () -> Unit = {},
     modifier: Modifier = Modifier,
-    swipeThreshold: Float = 50f,
+    swipeThreshold: Float = 80f,
     content: @Composable () -> Unit,
 )
