@@ -19,12 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import io.github.t45k.githubDiary.modifier.onKeyWithCommandPressed
 import io.github.t45k.githubDiary.ui.common.MarkdownEditor
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
@@ -42,17 +39,7 @@ fun EditScreen(
     }
 
     Scaffold(
-        modifier = Modifier.onPreviewKeyEvent { event ->
-            val isCmdSOrEnterPressed = event.type == KeyEventType.KeyDown &&
-                event.isMetaPressed &&
-                (event.key == Key.S || event.key == Key.Enter)
-            if (isCmdSOrEnterPressed && canSave) {
-                onSave()
-                true
-            } else {
-                false
-            }
-        },
+        modifier = Modifier.onKeyWithCommandPressed({ it.key == Key.S || it.key == Key.Enter }) { onSave() },
         topBar = {
             TopAppBar(
                 title = { Text(uiState.date.format(LocalDate.Formats.ISO)) },

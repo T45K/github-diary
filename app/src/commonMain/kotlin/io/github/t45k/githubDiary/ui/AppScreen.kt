@@ -41,6 +41,8 @@ import io.github.t45k.githubDiary.diary.edit.EditScreen
 import io.github.t45k.githubDiary.diary.edit.EditViewModel
 import io.github.t45k.githubDiary.diary.preview.PreviewScreen
 import io.github.t45k.githubDiary.diary.preview.PreviewViewModel
+import io.github.t45k.githubDiary.modifier.onKeyPressed
+import io.github.t45k.githubDiary.modifier.onKeyWithCommandPressed
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditScreen
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewScreen
@@ -124,15 +126,7 @@ fun AppScreen(
                             modifier = Modifier.fillMaxSize()
                                 .focusRequester(focusRequester)
                                 .focusable(true)
-                                .onPreviewKeyEvent { event ->
-                                    val isCmdRPressed = event.type == KeyEventType.KeyDown && event.isMetaPressed && event.key == Key.R
-                                    if (isCmdRPressed) {
-                                        calendarRefreshEvent.requestRefresh(yearMonth)
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
+                                .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) },
                         ) {
                             CalendarScreen(
                                 uiState = uiState,
