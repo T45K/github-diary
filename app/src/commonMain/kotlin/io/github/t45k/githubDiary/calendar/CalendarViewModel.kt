@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 
@@ -26,7 +28,7 @@ sealed interface CalendarUiState {
 
 class CalendarViewModel(
     private val calendarRepository: CalendarRepository,
-    private val calendarRefreshEvent: CalendarRefreshEvent,
+    calendarRefreshEvent: CalendarRefreshEvent,
     yearMonth: YearMonth,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<CalendarUiState>(CalendarUiState.Loading(yearMonth))
@@ -34,9 +36,9 @@ class CalendarViewModel(
 
     init {
         load(yearMonth)
-        viewModelScope.launch {
-            calendarRefreshEvent.refreshRequest.collect { reload() }
-        }
+        calendarRefreshEvent.refreshRequest
+            .onEach { reload() }
+            .launchIn(viewModelScope)
     }
 
     fun reload() {
