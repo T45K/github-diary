@@ -9,7 +9,7 @@ import kotlinx.datetime.YearMonth
 
 class AppViewModel(private val dateProvider: DateProvider) : ViewModel() {
     private val _backStack = MutableStateFlow<List<NavRoute>>(
-        listOf(NavRoute.Calendar(dateProvider.currentYearMonth()))
+        listOf(NavRoute.Calendar(dateProvider.currentYearMonth())),
     )
     val backStack: StateFlow<List<NavRoute>> = _backStack.asStateFlow()
 
@@ -22,7 +22,7 @@ class AppViewModel(private val dateProvider: DateProvider) : ViewModel() {
     }
 
     fun push(route: NavRoute) {
-        _backStack.value = _backStack.value + route
+        _backStack.value += route
     }
 
     fun pop() {

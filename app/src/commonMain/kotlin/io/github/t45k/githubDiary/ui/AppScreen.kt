@@ -133,7 +133,7 @@ fun AppScreen(
                                 .onKeyPressed({ it.key == Key.F }) { vimiumModeFlow.value = !isVimiumModeEnabled }
                                 .onKeyPressed({ isVimiumModeEnabled && it.key.isApplicableForVimium() }) {
                                     val date = yearMonth.onDay(it.key.toVimiumDay())
-//                                    viewModel.push(NavRoute.DiaryPreview(date))
+                                    viewModel.push(NavRoute.DiaryPreview(date))
                                 },
                         ) {
                             CalendarScreen(
