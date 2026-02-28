@@ -16,11 +16,11 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun SwipeNavigationContainer(
-    onSwipeBack: (() -> Unit)?,
-    onSwipeForward: (() -> Unit)?,
+    onSwipeBack: () -> Unit,
+    onSwipeForward: () -> Unit,
     modifier: Modifier,
     swipeThreshold: Float,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var accumulatedScroll by remember { mutableStateOf(0f) }
 
@@ -36,11 +36,12 @@ actual fun SwipeNavigationContainer(
                 // 左から右スワイプ（scrollDelta.x < 0）→ 戻る
                 // 右から左スワイプ（scrollDelta.x > 0）→ 進む
                 when {
-                    accumulatedScroll < -swipeThreshold && onSwipeBack != null -> {
+                    accumulatedScroll < -swipeThreshold -> {
                         onSwipeBack()
                         accumulatedScroll = 0f
                     }
-                    accumulatedScroll > swipeThreshold && onSwipeForward != null -> {
+
+                    accumulatedScroll > swipeThreshold -> {
                         onSwipeForward()
                         accumulatedScroll = 0f
                     }
@@ -49,7 +50,7 @@ actual fun SwipeNavigationContainer(
             .onPointerEvent(PointerEventType.Exit, PointerEventPass.Initial) { _: PointerEvent ->
                 // マウスが領域外に出たらリセット
                 accumulatedScroll = 0f
-            }
+            },
     ) {
         content()
     }

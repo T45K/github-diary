@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 actual fun SwipeNavigationContainer(
-    onSwipeBack: (() -> Unit)?,
-    onSwipeForward: (() -> Unit)?,
+    onSwipeBack: () -> Unit,
+    onSwipeForward: () -> Unit,
     modifier: Modifier,
     swipeThreshold: Float,
     content: @Composable () -> Unit
