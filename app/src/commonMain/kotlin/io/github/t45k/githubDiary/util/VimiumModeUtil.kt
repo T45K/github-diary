@@ -4,7 +4,7 @@ import androidx.compose.ui.input.key.Key
 import kotlinx.datetime.LocalDate
 
 private val dayToChar = ('0'..'9') + // add '0' for offset
-    ('A'..'Z').filterNot { it == 'F' } // 'F' is duplicated with Vimium key bind
+    ('A'..'Z')
 
 private val keyToChar = mapOf(
     Key.One to '1',
@@ -21,6 +21,7 @@ private val keyToChar = mapOf(
     Key.C to 'C',
     Key.D to 'D',
     Key.E to 'E',
+    Key.F to 'F',
     Key.G to 'G',
     Key.H to 'H',
     Key.I to 'I',

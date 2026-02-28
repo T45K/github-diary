@@ -130,7 +130,8 @@ fun AppScreen(
                                 .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) }
                                 .onKeyPressed({ it.key == Key.DirectionLeft }) { navigateToPrevMonth() }
                                 .onKeyPressed({ it.key == Key.DirectionRight }) { navigateToNextMonth() }
-                                .onKeyPressed({ it.key == Key.F }) { vimiumModeFlow.value = !isVimiumModeEnabled }
+                                .onKeyPressed({ !isVimiumModeEnabled && it.key == Key.F }) { vimiumModeFlow.value = true }
+                                .onKeyPressed({ isVimiumModeEnabled && it.key == Key.Escape }) { vimiumModeFlow.value = false }
                                 .onKeyPressed({ isVimiumModeEnabled && it.key.isApplicableForVimium() }) {
                                     val date = yearMonth.onDay(it.key.toVimiumDay())
                                     viewModel.push(NavRoute.DiaryPreview(date))
@@ -203,9 +204,18 @@ fun AppScreen(
 
                         val uiState by previewViewModel.uiState.collectAsState()
 
+                        val focusRequester = remember { FocusRequester() }
+                        LaunchedEffect(Unit) {
+                            focusRequester.requestFocus()
+                        }
+
                         SwipeNavigationContainer(
                             onSwipeBack = { viewModel.pop() },
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize()
+                                .focusRequester(focusRequester)
+                                .focusable(true)
+                                .onKeyPressed({ it.key == Key.E }) { viewModel.pop() }
+                                .onKeyPressed({ it.key == Key.I }) { viewModel.push(NavRoute.DiaryEdit(date)) },
                         ) {
                             PreviewScreen(
                                 uiState = uiState,
