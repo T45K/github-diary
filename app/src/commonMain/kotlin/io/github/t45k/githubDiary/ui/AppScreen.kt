@@ -26,11 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -122,11 +118,12 @@ fun AppScreen(
                         SwipeNavigationContainer(
                             onSwipeBack = navigateToPrevMonth,
                             onSwipeForward = navigateToNextMonth,
-                            swipeThreshold = 50f,
                             modifier = Modifier.fillMaxSize()
                                 .focusRequester(focusRequester)
                                 .focusable(true)
-                                .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) },
+                                .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) }
+                                .onKeyPressed({ it.key == Key.DirectionLeft }) { navigateToPrevMonth() }
+                                .onKeyPressed({ it.key == Key.DirectionRight }) { navigateToNextMonth() },
                         ) {
                             CalendarScreen(
                                 uiState = uiState,
