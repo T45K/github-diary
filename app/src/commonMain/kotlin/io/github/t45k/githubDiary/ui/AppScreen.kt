@@ -1,5 +1,6 @@
 package io.github.t45k.githubDiary.ui
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,9 +18,19 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -47,7 +58,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppScreen(
-    viewModel: AppViewModel = koinViewModel()
+    viewModel: AppViewModel = koinViewModel(),
 ) {
     val dateProvider: DateProvider = koinInject()
     val calendarRefreshEvent: CalendarRefreshEvent = koinInject()
@@ -101,11 +112,27 @@ fun AppScreen(
                         val navigateToPrevMonth: () -> Unit = { navigateToCalendar(yearMonth.minusMonth()) }
                         val navigateToNextMonth: () -> Unit = { navigateToCalendar(yearMonth.plusMonth()) }
 
+                        val focusRequester = remember { FocusRequester() }
+                        LaunchedEffect(Unit) {
+                            focusRequester.requestFocus()
+                        }
+
                         SwipeNavigationContainer(
                             onSwipeBack = navigateToPrevMonth,
                             onSwipeForward = navigateToNextMonth,
                             swipeThreshold = 50f,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize()
+                                .focusRequester(focusRequester)
+                                .focusable(true)
+                                .onPreviewKeyEvent { event ->
+                                    val isCmdRPressed = event.type == KeyEventType.KeyDown && event.isMetaPressed && event.key == Key.R
+                                    if (isCmdRPressed) {
+                                        calendarRefreshEvent.requestRefresh(yearMonth)
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
                         ) {
                             CalendarScreen(
                                 uiState = uiState,
