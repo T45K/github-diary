@@ -43,11 +43,10 @@ fun EditScreen(
 
     Scaffold(
         modifier = Modifier.onPreviewKeyEvent { event ->
-            if (event.type == KeyEventType.KeyDown &&
+            val isCmdSOrEnterPressed = event.type == KeyEventType.KeyDown &&
                 event.isMetaPressed &&
-                (event.key == Key.S || event.key == Key.Enter) &&
-                canSave
-            ) {
+                (event.key == Key.S || event.key == Key.Enter)
+            if (isCmdSOrEnterPressed && canSave) {
                 onSave()
                 true
             } else {

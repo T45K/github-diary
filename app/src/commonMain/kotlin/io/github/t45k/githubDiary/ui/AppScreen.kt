@@ -157,7 +157,6 @@ fun AppScreen(
                                 updateBackMoney = goalEditViewModel::updateBack,
                                 save = {
                                     goalEditViewModel.save {
-                                        calendarRefreshEvent.requestRefresh()
                                         navigateToCalendar(yearMonth)
                                     }
                                 },
@@ -202,8 +201,9 @@ fun AppScreen(
                                 onSave = {
                                     editViewModel.save { success, _ ->
                                         if (success) {
-                                            calendarRefreshEvent.requestRefresh()
-                                            navigateToCalendar(date.yearMonth)
+                                            val yearMonth = date.yearMonth
+                                            calendarRefreshEvent.requestRefresh(yearMonth)
+                                            navigateToCalendar(yearMonth)
                                         }
                                     }
                                 },
