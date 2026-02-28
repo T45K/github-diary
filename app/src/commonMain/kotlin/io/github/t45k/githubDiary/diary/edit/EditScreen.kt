@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.unit.dp
-import io.github.t45k.githubDiary.modifier.onKeyWithCommandPressed
+import io.github.t45k.githubDiary.util.onKeyWithCommandPressed
 import io.github.t45k.githubDiary.ui.common.MarkdownEditor
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format

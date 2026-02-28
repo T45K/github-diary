@@ -37,8 +37,6 @@ import io.github.t45k.githubDiary.diary.edit.EditScreen
 import io.github.t45k.githubDiary.diary.edit.EditViewModel
 import io.github.t45k.githubDiary.diary.preview.PreviewScreen
 import io.github.t45k.githubDiary.diary.preview.PreviewViewModel
-import io.github.t45k.githubDiary.modifier.onKeyPressed
-import io.github.t45k.githubDiary.modifier.onKeyWithCommandPressed
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditScreen
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewScreen
@@ -46,8 +44,14 @@ import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
 import io.github.t45k.githubDiary.setting.SettingsScreen
 import io.github.t45k.githubDiary.setting.SettingsViewModel
 import io.github.t45k.githubDiary.util.DateProvider
+import io.github.t45k.githubDiary.util.isApplicableForVimium
+import io.github.t45k.githubDiary.util.onKeyPressed
+import io.github.t45k.githubDiary.util.onKeyWithCommandPressed
+import io.github.t45k.githubDiary.util.toVimiumDay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
+import kotlinx.datetime.onDay
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
 import org.koin.compose.koinInject
@@ -106,6 +110,8 @@ fun AppScreen(
                         val yearMonth = key.yearMonth
                         val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
                         val uiState by calendarViewModel.uiState.collectAsState()
+                        val vimiumModeFlow = MutableStateFlow(false)
+                        val isVimiumModeEnabled by vimiumModeFlow.collectAsState()
 
                         val navigateToPrevMonth: () -> Unit = { navigateToCalendar(yearMonth.minusMonth()) }
                         val navigateToNextMonth: () -> Unit = { navigateToCalendar(yearMonth.plusMonth()) }
@@ -123,10 +129,16 @@ fun AppScreen(
                                 .focusable(true)
                                 .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) }
                                 .onKeyPressed({ it.key == Key.DirectionLeft }) { navigateToPrevMonth() }
-                                .onKeyPressed({ it.key == Key.DirectionRight }) { navigateToNextMonth() },
+                                .onKeyPressed({ it.key == Key.DirectionRight }) { navigateToNextMonth() }
+                                .onKeyPressed({ it.key == Key.F }) { vimiumModeFlow.value = !isVimiumModeEnabled }
+                                .onKeyPressed({ isVimiumModeEnabled && it.key.isApplicableForVimium() }) {
+                                    val date = yearMonth.onDay(it.key.toVimiumDay())
+//                                    viewModel.push(NavRoute.DiaryPreview(date))
+                                },
                         ) {
                             CalendarScreen(
-                                uiState = uiState,
+                                uiState,
+                                isVimiumModeEnabled,
                                 onPrev = navigateToPrevMonth,
                                 onNext = navigateToNextMonth,
                                 onSelect = { date -> viewModel.push(NavRoute.DiaryPreview(date)) },

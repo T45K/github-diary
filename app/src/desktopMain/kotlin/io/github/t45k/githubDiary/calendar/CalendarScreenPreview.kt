@@ -11,7 +11,7 @@ import kotlinx.datetime.YearMonth
 fun CalendarScreenPreview(
     @PreviewParameter(CalendarUiStatePreviewProvider::class) uiState: CalendarUiState,
 ) {
-    CalendarScreen(uiState, {}, {}, {}, {})
+    CalendarScreen(uiState, isVimiumModeEnabled = false, {}, {}, {}, {})
 }
 
 class CalendarUiStatePreviewProvider : PreviewParameterProvider<CalendarUiState> {

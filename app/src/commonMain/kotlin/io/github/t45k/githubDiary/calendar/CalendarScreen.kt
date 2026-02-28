@@ -2,15 +2,17 @@ package io.github.t45k.githubDiary.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -18,17 +20,14 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.t45k.githubDiary.ui.common.LoadingBox
+import io.github.t45k.githubDiary.util.toVimiumChar
 import io.github.t45k.githubDiary.util.yearMonthSlashFormat
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -37,6 +36,7 @@ import kotlinx.datetime.format
 @Composable
 fun CalendarScreen(
     uiState: CalendarUiState,
+    isVimiumModeEnabled: Boolean,
     onPrev: () -> Unit,
     onNext: () -> Unit,
     onGoalPreview: (YearMonth) -> Unit,
@@ -74,6 +74,7 @@ fun CalendarScreen(
                 )
                 CalendarContent(
                     calendar = uiState.calendar,
+                    isVimiumModeEnabled,
                     onSelect = onSelect,
                 )
             }
@@ -112,11 +113,12 @@ private fun CalendarHeader(
 @Composable
 private fun CalendarContent(
     calendar: Calendar,
+    isVimiumModeEnabled: Boolean,
     onSelect: (LocalDate) -> Unit,
 ) {
     DaysOfWeek()
     Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
-    CalendarDays(calendar, onSelect)
+    CalendarDays(calendar, isVimiumModeEnabled, onSelect)
 }
 
 @Composable
@@ -143,7 +145,7 @@ private fun DaysOfWeek() {
 }
 
 @Composable
-private fun CalendarDays(calendar: Calendar, onSelect: (LocalDate) -> Unit) {
+private fun CalendarDays(calendar: Calendar, isVimiumModeEnabled: Boolean, onSelect: (LocalDate) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
         calendar.weeks().forEach { week ->
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -155,6 +157,7 @@ private fun CalendarDays(calendar: Calendar, onSelect: (LocalDate) -> Unit) {
                             day = day,
                             isSunday = index == 0,
                             isSaturday = index == 6,
+                            isVimiumModeEnabled,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             onSelect = onSelect,
                         )
@@ -171,11 +174,14 @@ private fun DayCell(
     day: CalendarDay,
     isSunday: Boolean,
     isSaturday: Boolean,
+    isVimiumModeEnabled: Boolean,
     modifier: Modifier = Modifier,
     onSelect: (LocalDate) -> Unit,
 ) {
+    val (localDate, hasContent) = day
+
     Box(
-        modifier = modifier.clickable { onSelect(day.first) },
+        modifier = modifier.clickable { onSelect(localDate) },
     ) {
         Column(
             modifier = Modifier
@@ -183,17 +189,45 @@ private fun DayCell(
                 .padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = day.first.day.toString(),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = when {
-                    isSunday -> Color(0xFFFF5252)
-                    isSaturday -> Color(0xFF448AFF)
-                    else -> MaterialTheme.colors.onSurface
-                },
-            )
-            if (day.second) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = localDate.day.toString(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = when {
+                        isSunday -> Color(0xFFFF5252)
+                        isSaturday -> Color(0xFF448AFF)
+                        else -> MaterialTheme.colors.onSurface
+                    },
+                )
+                if (isVimiumModeEnabled) {
+                    Box(
+                        Modifier.weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color.Yellow),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = localDate.toVimiumChar(),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Black,
+                                style = TextStyle()
+                            )
+                        }
+                    }
+                } else Spacer(Modifier.weight(1f))
+            }
+            if (hasContent) {
                 Box(
                     modifier = Modifier
                         .padding(top = 4.dp)
