@@ -1,5 +1,6 @@
 package io.github.t45k.githubDiary.diary.edit
 
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.t45k.githubDiary.diary.DiaryContent
@@ -17,7 +18,6 @@ sealed class EditUiState {
 
     data class Editing(
         override val date: LocalDate,
-        val content: String,
         val isSaving: Boolean = false,
     ) : EditUiState()
 
@@ -25,7 +25,6 @@ sealed class EditUiState {
 
     data class Error(
         override val date: LocalDate,
-        val content: String,
         val message: String,
     ) : EditUiState()
 }
@@ -37,6 +36,8 @@ class EditViewModel(
     private val _uiState = MutableStateFlow<EditUiState>(EditUiState.Loading(date))
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
 
+    val textFieldState = TextFieldState()
+
     init {
         load(date)
     }
@@ -47,47 +48,36 @@ class EditViewModel(
 
             try {
                 val diaryContent = diaryRepository.findByDate(date)
-                _uiState.value = EditUiState.Editing(
-                    date = date,
-                    content = diaryContent.content,
-                )
+                textFieldState.edit { replace(0, length, diaryContent.content) }
+                _uiState.value = EditUiState.Editing(date = date)
             } catch (e: Exception) {
                 _uiState.value = EditUiState.Error(
                     date = date,
-                    content = "",
                     message = e.message ?: "Failed to load",
                 )
             }
         }
     }
 
-    fun updateContent(value: String) {
-        val currentState = _uiState.value
-        if (currentState is EditUiState.Editing) {
-            _uiState.value = currentState.copy(content = value)
-        } else if (currentState is EditUiState.Error) {
-            _uiState.value = EditUiState.Editing(
-                date = currentState.date,
-                content = value,
-            )
-        }
-    }
-
     fun save(onSaved: (Boolean, String?) -> Unit = { _, _ -> }) {
         val currentState = _uiState.value
-        if (currentState !is EditUiState.Editing) return
+        val date = when (currentState) {
+            is EditUiState.Editing -> currentState.date
+            is EditUiState.Error -> currentState.date
+            else -> return
+        }
 
-        _uiState.value = currentState.copy(isSaving = true)
+        _uiState.value = EditUiState.Editing(date = date, isSaving = true)
+        val content = textFieldState.text.toString()
 
         viewModelScope.launch {
             try {
-                diaryRepository.save(DiaryContent(currentState.date, currentState.content))
-                _uiState.value = EditUiState.Saved(currentState.date)
+                diaryRepository.save(DiaryContent(date, content))
+                _uiState.value = EditUiState.Saved(date)
                 onSaved(true, null)
             } catch (e: Exception) {
                 _uiState.value = EditUiState.Error(
-                    date = currentState.date,
-                    content = currentState.content,
+                    date = date,
                     message = e.message ?: "Failed to save",
                 )
                 onSaved(false, e.message)

@@ -236,8 +236,8 @@ fun AppScreen(
                         ) {
                             EditScreen(
                                 uiState = uiState,
+                                textFieldState = editViewModel.textFieldState,
                                 onBack = { viewModel.pop() },
-                                onContentChange = { editViewModel.updateContent(it) },
                                 onSave = {
                                     editViewModel.save { success, _ ->
                                         if (success) {

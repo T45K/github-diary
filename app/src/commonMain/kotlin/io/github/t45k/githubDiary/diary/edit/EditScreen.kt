@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
@@ -29,15 +30,10 @@ import kotlinx.datetime.format
 @Composable
 fun EditScreen(
     uiState: EditUiState,
+    textFieldState: TextFieldState,
     onBack: () -> Unit,
-    onContentChange: (String) -> Unit,
     onSave: () -> Unit,
 ) {
-    val canSave = when (uiState) {
-        is EditUiState.Editing -> !uiState.isSaving
-        else -> false
-    }
-
     Scaffold(
         modifier = Modifier.onKeyWithCommandPressed({ it.key == Key.S || it.key == Key.Enter }) { onSave() },
         topBar = {
@@ -60,7 +56,7 @@ fun EditScreen(
                 }
 
                 is EditUiState.Editing -> {
-                    MarkdownEditor(uiState.content, onContentChange)
+                    MarkdownEditor(textFieldState)
 
                     Row(Modifier.padding(top = 12.dp)) {
                         Button(onClick = onSave, enabled = !uiState.isSaving) {
@@ -80,10 +76,7 @@ fun EditScreen(
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
 
-                    MarkdownEditor(
-                        text = uiState.content,
-                        onValueChange = onContentChange,
-                    )
+                    MarkdownEditor(textFieldState)
 
                     Row(Modifier.padding(top = 12.dp)) {
                         Button(onClick = onSave) { Text("Retry Save") }

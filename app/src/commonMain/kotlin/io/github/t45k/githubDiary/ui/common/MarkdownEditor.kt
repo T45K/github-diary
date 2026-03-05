@@ -2,7 +2,6 @@ package io.github.t45k.githubDiary.ui.common
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,20 +10,16 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun MarkdownEditor(
-    text: String,
-    onValueChange: (String) -> Unit,
+    textFieldState: TextFieldState,
 ) {
-    val textFieldState = rememberTextFieldState(text)
-
     LaunchedEffect(textFieldState) {
-        var previousText = text
+        var previousText = textFieldState.text.toString()
         snapshotFlow { textFieldState.text }
             .collect { charSequence ->
                 val newText = charSequence.toString()
                 if (newText != previousText) {
                     applyMarkdownList(previousText, newText, textFieldState)
                     previousText = textFieldState.text.toString()
-                    onValueChange(previousText)
                 }
             }
     }
