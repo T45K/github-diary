@@ -82,7 +82,7 @@ kotlin {
 
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC")
 
-                implementation("io.arrow-kt:arrow-core:2.2.1.1")
+                implementation("io.arrow-kt:arrow-core:2.2.2")
 
                 // Koin
                 implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.1"))
