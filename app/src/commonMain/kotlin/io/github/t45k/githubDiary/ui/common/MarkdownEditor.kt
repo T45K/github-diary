@@ -5,8 +5,11 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 
 @Composable
 fun MarkdownEditor(
@@ -24,9 +27,14 @@ fun MarkdownEditor(
             }
     }
 
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     OutlinedTextField(
         state = textFieldState,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
     )
 }
 
