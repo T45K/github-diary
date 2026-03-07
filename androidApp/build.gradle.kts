@@ -37,7 +37,7 @@ android {
 dependencies {
     implementation(project(":app"))
     implementation(libs.androidx.activity.compose)
-    implementation(compose.material)
+    implementation(libs.compose.material)
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
 }
