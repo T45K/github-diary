@@ -2,42 +2,12 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
-    kotlin("multiplatform") version "2.3.10"
-    kotlin("plugin.power-assert") version "2.3.10"
-    kotlin("plugin.compose") version "2.3.10"
-    id("org.jetbrains.compose") version "1.10.2"
-    kotlin("plugin.serialization") version "2.3.10"
-    id("com.android.application") version "9.1.0"
-}
-
-android {
-    namespace = "io.github.t45k.githubDiary"
-    compileSdk = 36
-
-    defaultConfig {
-        applicationId = "io.github.t45k.githubDiary"
-        minSdk = 26
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.1"
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
-    }
+    kotlin("multiplatform")
+    kotlin("plugin.power-assert")
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
+    id("com.android.kotlin.multiplatform.library")
 }
 
 kotlin {
@@ -45,7 +15,17 @@ kotlin {
         languageVersion.set(JavaLanguageVersion.of(25))
     }
 
-    androidTarget()
+    android {
+        namespace = "io.github.t45k.githubDiary"
+        compileSdk = 36
+        minSdk = 26
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+    }
 
     jvm("desktop")
 
@@ -60,58 +40,49 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                implementation(compose.ui)
-                implementation(compose.components.resources)
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.ui)
+            implementation(compose.components.resources)
 
-                implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-                implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
-                implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0-alpha01")
+            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
+            implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0-alpha01")
 
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 
-                implementation("io.ktor:ktor-client-core:3.4.1")
-                implementation("io.ktor:ktor-client-content-negotiation:3.4.1")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.1")
-                implementation("io.ktor:ktor-client-logging:3.4.1")
+            implementation("io.ktor:ktor-client-core:3.4.1")
+            implementation("io.ktor:ktor-client-content-negotiation:3.4.1")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.1")
+            implementation("io.ktor:ktor-client-logging:3.4.1")
 
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC")
 
-                implementation("io.arrow-kt:arrow-core:2.2.2")
+            implementation("io.arrow-kt:arrow-core:2.2.2")
 
-                // Koin
-                implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.1"))
-                implementation("io.insert-koin:koin-core")
-                implementation("io.insert-koin:koin-compose")
-                implementation("io.insert-koin:koin-compose-viewmodel")
-            }
+            // Koin
+            implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.1"))
+            implementation("io.insert-koin:koin-core")
+            implementation("io.insert-koin:koin-compose")
+            implementation("io.insert-koin:koin-compose-viewmodel")
         }
 
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("io.insert-koin:koin-test")
-                implementation("org.junit.jupiter:junit-jupiter:6.0.3")
-                implementation("io.ktor:ktor-client-mock:3.4.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation("io.insert-koin:koin-test")
+            implementation("org.junit.jupiter:junit-jupiter:6.0.3")
+            implementation("io.ktor:ktor-client-mock:3.4.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
 
-        val androidMain by getting {
-            dependencies {
-                implementation("io.ktor:ktor-client-okhttp:3.4.1")
-            }
+        androidMain.dependencies {
+            implementation("io.ktor:ktor-client-okhttp:3.4.1")
         }
 
-        val iosMain by creating {
-            dependsOn(commonMain)
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:3.4.1")
-            }
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:3.4.1")
         }
 
         val desktopMain by getting {
@@ -123,38 +94,10 @@ kotlin {
             }
         }
 
-        val iosX64Main by getting {
-            dependsOn(iosMain)
-        }
-
-        val iosArm64Main by getting {
-            dependsOn(iosMain)
-        }
-
-        val iosSimulatorArm64Main by getting {
-            dependsOn(iosMain)
-        }
-
         val desktopTest by getting {
             dependencies {
                 implementation("org.junit.platform:junit-platform-launcher:6.0.3")
             }
-        }
-
-        val iosTest by creating {
-            dependsOn(commonTest)
-        }
-
-        val iosX64Test by getting {
-            dependsOn(iosTest)
-        }
-
-        val iosArm64Test by getting {
-            dependsOn(iosTest)
-        }
-
-        val iosSimulatorArm64Test by getting {
-            dependsOn(iosTest)
         }
     }
 }
