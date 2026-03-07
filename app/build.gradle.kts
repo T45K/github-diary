@@ -3,9 +3,9 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     kotlin("multiplatform") version "2.3.10"
-    kotlin("plugin.power-assert") version "2.3.0"
+    kotlin("plugin.power-assert") version "2.3.10"
     kotlin("plugin.compose") version "2.3.10"
-    id("org.jetbrains.compose") version "1.10.0"
+    id("org.jetbrains.compose") version "1.10.2"
     kotlin("plugin.serialization") version "2.3.10"
     id("com.android.application") version "9.1.0"
 }
