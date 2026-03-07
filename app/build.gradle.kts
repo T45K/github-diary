@@ -12,13 +12,13 @@ plugins {
 
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInt()))
     }
 
     android {
         namespace = "io.github.t45k.githubDiary"
-        compileSdk = 36
-        minSdk = 26
+        compileSdk = libs.versions.androidCompileSdk.get().toInt()
+        minSdk = libs.versions.androidMinSdk.get().toInt()
 
         packaging {
             resources {
@@ -47,56 +47,56 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
 
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-            implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
-            implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0-alpha01")
+            implementation(libs.compose.material.icons.extended)
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.navigation3.ui)
 
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+            implementation(libs.kotlinx.datetime)
 
-            implementation("io.ktor:ktor-client-core:3.4.1")
-            implementation("io.ktor:ktor-client-content-negotiation:3.4.1")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.1")
-            implementation("io.ktor:ktor-client-logging:3.4.1")
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
 
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC")
+            implementation(libs.kotlinx.serialization.json)
 
-            implementation("io.arrow-kt:arrow-core:2.2.2")
+            implementation(libs.arrow.core)
 
             // Koin
-            implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.1"))
-            implementation("io.insert-koin:koin-core")
-            implementation("io.insert-koin:koin-compose")
-            implementation("io.insert-koin:koin-compose-viewmodel")
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation("io.insert-koin:koin-test")
-            implementation("org.junit.jupiter:junit-jupiter:6.0.3")
-            implementation("io.ktor:ktor-client-mock:3.4.1")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+            implementation(libs.koin.test)
+            implementation(libs.junit.jupiter)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.kotlinx.coroutines.test)
         }
 
         androidMain.dependencies {
-            implementation("io.ktor:ktor-client-okhttp:3.4.1")
+            implementation(libs.ktor.client.okhttp)
         }
 
         iosMain.dependencies {
-            implementation("io.ktor:ktor-client-darwin:3.4.1")
+            implementation(libs.ktor.client.darwin)
         }
 
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
-                implementation("io.ktor:ktor-client-cio:3.4.1")
-                implementation("ch.qos.logback:logback-classic:1.5.25")
+                implementation(libs.kotlinx.coroutines.swing)
+                implementation(libs.ktor.client.cio)
+                implementation(libs.logback.classic)
             }
         }
 
         val desktopTest by getting {
             dependencies {
-                implementation("org.junit.platform:junit-platform-launcher:6.0.3")
+                implementation(libs.junit.platform.launcher)
             }
         }
     }
@@ -109,7 +109,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(Dmg)
             packageName = "GitHub Diary"
-            packageVersion = "1.0.1"
+            packageVersion = libs.versions.appVersionName.get()
 
             modules("java.instrument", "java.management", "java.naming", "java.prefs", "java.sql", "jdk.unsupported", "java.xml")
 

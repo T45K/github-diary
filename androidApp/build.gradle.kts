@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "io.github.t45k.githubDiary.app"
-    compileSdk = 36
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "io.github.t45k.githubDiary"
-        minSdk = 26
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.1"
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+        targetSdk = libs.versions.androidTargetSdk.get().toInt()
+        versionCode = libs.versions.appVersionCode.get().toInt()
+        versionName = libs.versions.appVersionName.get()
     }
 
     packaging {
