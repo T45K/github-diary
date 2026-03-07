@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     kotlin("plugin.compose")
+    id("org.jetbrains.compose")
 }
 
 android {
@@ -35,4 +36,8 @@ android {
 
 dependencies {
     implementation(project(":app"))
+    implementation(libs.androidx.activity.compose)
+    implementation(compose.material)
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.core)
 }
