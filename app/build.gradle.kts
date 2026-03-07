@@ -138,7 +138,7 @@ kotlin {
 
         val desktopTest by getting {
             dependencies {
-                implementation("org.junit.platform:junit-platform-launcher:6.0.2")
+                implementation("org.junit.platform:junit-platform-launcher:6.0.3")
             }
         }
 
