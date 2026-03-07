@@ -2,7 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
-    kotlin("multiplatform") version "2.3.0"
+    kotlin("multiplatform") version "2.3.10"
     kotlin("plugin.power-assert") version "2.3.0"
     kotlin("plugin.compose") version "2.3.10"
     id("org.jetbrains.compose") version "1.10.0"
