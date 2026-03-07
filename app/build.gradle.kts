@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.compose") version "2.3.10"
     id("org.jetbrains.compose") version "1.10.0"
     kotlin("plugin.serialization") version "2.3.0"
-    id("com.android.application") version "8.12.3"
+    id("com.android.application") version "9.1.0"
 }
 
 android {
