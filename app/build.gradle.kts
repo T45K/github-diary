@@ -10,9 +10,14 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
 }
 
+val desktopJavaLanguageVersion = JavaLanguageVersion.of(libs.versions.java.get().toInt())
+val desktopPackagingJavaHome = javaToolchains.launcherFor {
+    languageVersion.set(desktopJavaLanguageVersion)
+}.map { it.metadata.installationPath.asFile.absolutePath }
+
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInt()))
+        languageVersion.set(desktopJavaLanguageVersion)
     }
 
     android {
@@ -105,6 +110,7 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "io.github.t45k.githubDiary.MainKt"
+        javaHome = desktopPackagingJavaHome.get()
 
         nativeDistributions {
             targetFormats(Dmg)
