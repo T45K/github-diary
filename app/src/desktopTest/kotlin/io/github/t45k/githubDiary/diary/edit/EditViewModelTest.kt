@@ -1,5 +1,6 @@
 package io.github.t45k.githubDiary.diary.edit
 
+import androidx.compose.foundation.text.input.TextFieldBuffer
 import io.github.t45k.githubDiary.diary.DiaryContent
 import io.github.t45k.githubDiary.diary.DiaryRepository
 import io.github.t45k.githubDiary.github.GitHubClient
@@ -69,7 +70,7 @@ class EditViewModelTest {
         assert(state is EditUiState.Editing)
         val editingState = state as EditUiState.Editing
         assert(editingState.date == LocalDate(2026, 1, 15))
-        assert(editingState.content == expectedContent)
+        assert(viewModel.textFieldState.text.toString() == expectedContent)
         assert(editingState.isSaving == false)
     }
 
@@ -84,12 +85,12 @@ class EditViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // when
-        viewModel.updateContent("New content")
+        viewModel.textFieldState.edit { replace(0, length, "New content") }
         val state = viewModel.uiState.value
 
         // then
         assert(state is EditUiState.Editing)
-        assert((state as EditUiState.Editing).content == "New content")
+        assert(viewModel.textFieldState.text.toString() == "New content")
     }
 
     @Test
@@ -101,7 +102,7 @@ class EditViewModelTest {
             date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateContent("Content to save")
+        viewModel.textFieldState.edit { replace(0, length, "Content to save") }
 
         // when
         viewModel.save()
@@ -121,7 +122,7 @@ class EditViewModelTest {
             date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateContent("Content to save")
+        viewModel.textFieldState.edit { replace(0, length, "Content to save") }
 
         // when
         viewModel.save()
@@ -142,7 +143,7 @@ class EditViewModelTest {
             date = date,
         )
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateContent("Content")
+        viewModel.textFieldState.edit { replace(0, length, "Content") }
         var savedSuccess: Boolean? = null
 
         // when

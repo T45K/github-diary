@@ -138,7 +138,7 @@ class CalendarViewModelTest {
 
         // when: update repo data and trigger refresh
         fakeRepo.returnCalendar = updatedCalendar
-        refreshEvent.requestRefresh()
+        refreshEvent.requestRefresh(YearMonth(2026, 1))
         testDispatcher.scheduler.advanceUntilIdle()
 
         // then: state should reflect updated data
