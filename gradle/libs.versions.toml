@@ -21,6 +21,7 @@ junit = "6.0.3"
 coroutines = "1.10.2"
 logback = "1.5.25"
 activityCompose = "1.10.1"
+jetbrainsMarkdown = "0.7.3"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -53,6 +54,7 @@ kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
+jetbrains-markdown = { module = "org.jetbrains:markdown", version.ref = "jetbrainsMarkdown" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

@@ -15,40 +15,19 @@ class MarkdownEditorTest {
 
     @Test
     fun `bullet dash continuation`() {
-        // given
-        val oldText = "- item"
-        val newText = "- item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("- item", "- item\n")
         assert(result == "- item\n- ")
     }
 
     @Test
     fun `bullet asterisk continuation`() {
-        // given
-        val oldText = "* item"
-        val newText = "* item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("* item", "* item\n")
         assert(result == "* item\n* ")
     }
 
     @Test
     fun `bullet plus continuation`() {
-        // given
-        val oldText = "+ item"
-        val newText = "+ item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("+ item", "+ item\n")
         assert(result == "+ item\n+ ")
     }
 
@@ -56,27 +35,13 @@ class MarkdownEditorTest {
 
     @Test
     fun `ordered list dot continuation with increment`() {
-        // given
-        val oldText = "1. item"
-        val newText = "1. item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("1. item", "1. item\n")
         assert(result == "1. item\n2. ")
     }
 
     @Test
     fun `ordered list paren continuation with increment`() {
-        // given
-        val oldText = "2) item"
-        val newText = "2) item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("2) item", "2) item\n")
         assert(result == "2) item\n3) ")
     }
 
@@ -84,27 +49,13 @@ class MarkdownEditorTest {
 
     @Test
     fun `unchecked checklist continuation`() {
-        // given
-        val oldText = "- [ ] todo"
-        val newText = "- [ ] todo\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("- [ ] todo", "- [ ] todo\n")
         assert(result == "- [ ] todo\n- [ ] ")
     }
 
     @Test
     fun `checked checklist continues as unchecked`() {
-        // given
-        val oldText = "- [x] done"
-        val newText = "- [x] done\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("- [x] done", "- [x] done\n")
         assert(result == "- [x] done\n- [ ] ")
     }
 
@@ -112,27 +63,13 @@ class MarkdownEditorTest {
 
     @Test
     fun `blockquote continuation`() {
-        // given
-        val oldText = "> text"
-        val newText = "> text\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("> text", "> text\n")
         assert(result == "> text\n> ")
     }
 
     @Test
     fun `nested blockquote continuation`() {
-        // given
-        val oldText = "> > text"
-        val newText = "> > text\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("> > text", "> > text\n")
         assert(result == "> > text\n> > ")
     }
 
@@ -140,81 +77,64 @@ class MarkdownEditorTest {
 
     @Test
     fun `indented bullet list continuation`() {
-        // given
-        val oldText = "  - item"
-        val newText = "  - item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("  - item", "  - item\n")
         assert(result == "  - item\n  - ")
     }
 
     @Test
     fun `indented ordered list continuation`() {
-        // given
-        val oldText = "    1. item"
-        val newText = "    1. item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("    1. item", "    1. item\n")
         assert(result == "    1. item\n    2. ")
     }
 
-    // --- Empty marker cancellation ---
+    // --- Empty marker cancellation (tight list → non-tight conversion) ---
 
     @Test
-    fun `empty bullet item cancellation`() {
-        // given
-        val oldText = "- item\n- "
-        val newText = "- item\n- \n"
+    fun `empty bullet in tight list converts to non-tight`() {
+        // CodeMirror: second empty item in tight list → add blank line, keep marker
+        val result = applyAndGetResult("- item\n- ", "- item\n- \n")
+        assert(result == "- item\n\n- ")
+    }
 
-        // when
-        val result = applyAndGetResult(oldText, newText)
+    @Test
+    fun `empty checklist in tight list converts to non-tight`() {
+        val result = applyAndGetResult("- [x] done\n- [ ] ", "- [x] done\n- [ ] \n")
+        assert(result == "- [x] done\n\n- [ ] ")
+    }
 
-        // then
+    // --- Empty marker cancellation (removal) ---
+
+    @Test
+    fun `empty bullet in non-tight list is removed`() {
+        // After converting to non-tight, pressing Enter again removes the marker
+        val result = applyAndGetResult("- item\n\n- ", "- item\n\n- \n")
+        assert(result == "- item\n\n")
+    }
+
+    @Test
+    fun `empty ordered list item is removed`() {
+        // Single ordered list item → removed
+        val result = applyAndGetResult("- item\n2. ", "- item\n2. \n")
         assert(result == "- item\n")
     }
 
     @Test
-    fun `empty ordered list item cancellation`() {
-        // given
-        val oldText = "- item\n2. "
-        val newText = "- item\n2. \n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
-        assert(result == "- item\n")
+    fun `first empty bullet item is removed`() {
+        // First (and only) item → always removed
+        val result = applyAndGetResult("- ", "- \n")
+        assert(result == "")
     }
 
     @Test
-    fun `empty checklist item cancellation`() {
-        // given
-        val oldText = "- [x] done\n- [ ] "
-        val newText = "- [x] done\n- [ ] \n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
-        assert(result == "- [x] done\n")
+    fun `third empty bullet in tight list is removed`() {
+        // Third+ item → always removed
+        val result = applyAndGetResult("- one\n- two\n- ", "- one\n- two\n- \n")
+        assert(result == "- one\n- two\n")
     }
 
     @Test
     fun `empty blockquote cancellation`() {
-        // given
-        val oldText = "> text\n> "
-        val newText = "> text\n> \n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("> text\n> ", "> text\n> \n")
         assert(result == "> text\n")
     }
 
@@ -222,55 +142,59 @@ class MarkdownEditorTest {
 
     @Test
     fun `blockquote with bullet list continuation`() {
-        // given
-        val oldText = "> - item"
-        val newText = "> - item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("> - item", "> - item\n")
         assert(result == "> - item\n> - ")
     }
 
     @Test
     fun `blockquote with ordered list continuation`() {
-        // given
-        val oldText = "> 1. item"
-        val newText = "> 1. item\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("> 1. item", "> 1. item\n")
         assert(result == "> 1. item\n> 2. ")
+    }
+
+    @Test
+    fun `empty bullet in tight list inside blockquote converts to non-tight`() {
+        val result = applyAndGetResult("> - item\n> - ", "> - item\n> - \n")
+        assert(result == "> - item\n>\n> - ")
+    }
+
+    // --- Fenced code block (parser-based) ---
+
+    @Test
+    fun `no continuation inside fenced code block`() {
+        val oldText = "```\n- item"
+        val newText = "```\n- item\n"
+        val result = applyAndGetResult(oldText, newText)
+        assert(result == "```\n- item\n")
+    }
+
+    @Test
+    fun `no continuation for unclosed fence in list`() {
+        val oldText = "- ```foo"
+        val newText = "- ```foo\n"
+        val result = applyAndGetResult(oldText, newText)
+        assert(result == "- ```foo\n")
+    }
+
+    @Test
+    fun `continuation works after closed fence`() {
+        val oldText = "```\ncode\n```\n- item"
+        val newText = "```\ncode\n```\n- item\n"
+        val result = applyAndGetResult(oldText, newText)
+        assert(result == "```\ncode\n```\n- item\n- ")
     }
 
     // --- No-op cases ---
 
     @Test
     fun `plain text newline does nothing`() {
-        // given
-        val oldText = "hello"
-        val newText = "hello\n"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("hello", "hello\n")
         assert(result == "hello\n")
     }
 
     @Test
     fun `non-newline character addition does nothing`() {
-        // given
-        val oldText = "- item"
-        val newText = "- items"
-
-        // when
-        val result = applyAndGetResult(oldText, newText)
-
-        // then
+        val result = applyAndGetResult("- item", "- items")
         assert(result == "- items")
     }
 }
