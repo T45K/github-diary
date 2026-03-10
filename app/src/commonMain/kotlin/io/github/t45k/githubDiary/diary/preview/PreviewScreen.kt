@@ -26,6 +26,7 @@ fun PreviewScreen(
     uiState: PreviewUiState,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onReadMore: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -49,6 +50,8 @@ fun PreviewScreen(
             }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onEdit) { Text("Edit") }
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onReadMore) { Text("まとめて読む") }
         }
     }
 }

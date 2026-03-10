@@ -37,6 +37,8 @@ import io.github.t45k.githubDiary.diary.edit.EditScreen
 import io.github.t45k.githubDiary.diary.edit.EditViewModel
 import io.github.t45k.githubDiary.diary.preview.PreviewScreen
 import io.github.t45k.githubDiary.diary.preview.PreviewViewModel
+import io.github.t45k.githubDiary.diary.preview.ReadMoreScreen
+import io.github.t45k.githubDiary.diary.preview.ReadMoreViewModel
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditScreen
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewScreen
@@ -221,6 +223,25 @@ fun AppScreen(
                                 uiState = uiState,
                                 onBack = { viewModel.pop() },
                                 onEdit = { viewModel.push(NavRoute.DiaryEdit(date)) },
+                                onReadMore = { viewModel.push(NavRoute.DiaryReadMore(date)) },
+                            )
+                        }
+                    }
+
+                    entry<NavRoute.DiaryReadMore> { key ->
+                        val date = key.date
+                        val readMoreViewModel: ReadMoreViewModel = koinViewModel(key = "readMore-$date") { parametersOf(date) }
+                        val uiState by readMoreViewModel.uiState.collectAsState()
+
+                        SwipeNavigationContainer(
+                            onSwipeBack = { viewModel.pop() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            ReadMoreScreen(
+                                uiState = uiState,
+                                onBack = { viewModel.pop() },
+                                onLoadPrevious = readMoreViewModel::loadPrevious,
+                                onLoadNext = readMoreViewModel::loadNext,
                             )
                         }
                     }

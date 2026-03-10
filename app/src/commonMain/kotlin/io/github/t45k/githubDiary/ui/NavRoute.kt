@@ -23,6 +23,13 @@ sealed interface NavRoute : NavKey {
     }
 
     @Serializable
+    data class DiaryReadMore(val year: Int, val month: Int, val day: Int) : NavRoute {
+        constructor(date: LocalDate) : this(date.year, date.month.number, date.day)
+
+        val date: LocalDate get() = LocalDate(year, month, day)
+    }
+
+    @Serializable
     data class DiaryEdit(val year: Int, val month: Int, val day: Int) : NavRoute {
         constructor(date: LocalDate) : this(date.year, date.month.number, date.day)
 

@@ -6,6 +6,7 @@ import io.github.t45k.githubDiary.calendar.CalendarViewModel
 import io.github.t45k.githubDiary.diary.DiaryRepository
 import io.github.t45k.githubDiary.diary.edit.EditViewModel
 import io.github.t45k.githubDiary.diary.preview.PreviewViewModel
+import io.github.t45k.githubDiary.diary.preview.ReadMoreViewModel
 import io.github.t45k.githubDiary.github.GitHubClient
 import io.github.t45k.githubDiary.monthlyNote.GoalRepository
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
@@ -43,6 +44,10 @@ val appModule = module {
 
     viewModel { (date: LocalDate) ->
         PreviewViewModel(get(), date)
+    }
+
+    viewModel { (date: LocalDate) ->
+        ReadMoreViewModel(get(), date)
     }
 
     viewModel { (date: LocalDate) ->
