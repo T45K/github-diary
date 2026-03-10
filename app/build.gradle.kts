@@ -10,10 +10,18 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
 }
 
+fun hasXcodeBuild(): Boolean = runCatching {
+    val process = ProcessBuilder("/usr/bin/xcrun", "xcodebuild", "-version")
+        .redirectErrorStream(true)
+        .start()
+    process.waitFor() == 0
+}.getOrDefault(false)
+
 val desktopJavaLanguageVersion = JavaLanguageVersion.of(libs.versions.java.get().toInt())
 val desktopPackagingJavaHome = javaToolchains.launcherFor {
     languageVersion.set(desktopJavaLanguageVersion)
 }.map { it.metadata.installationPath.asFile.absolutePath }
+val enableAppleTargets = hasXcodeBuild()
 
 kotlin {
     jvmToolchain {
@@ -34,13 +42,15 @@ kotlin {
 
     jvm("desktop")
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    if (enableAppleTargets) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
 
-    targets.withType<KotlinNativeTarget> {
-        binaries.framework {
-            baseName = "GitHubDiary"
+        targets.withType<KotlinNativeTarget> {
+            binaries.framework {
+                baseName = "GitHubDiary"
+            }
         }
     }
 
@@ -79,7 +89,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.koin.test)
-            implementation(libs.junit.jupiter)
             implementation(libs.ktor.client.mock)
             implementation(libs.kotlinx.coroutines.test)
         }
@@ -88,8 +97,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
 
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
+        if (enableAppleTargets) {
+            iosMain.dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
 
         val desktopMain by getting {
@@ -103,6 +114,7 @@ kotlin {
 
         val desktopTest by getting {
             dependencies {
+                implementation(libs.junit.jupiter)
                 implementation(libs.junit.platform.launcher)
             }
         }

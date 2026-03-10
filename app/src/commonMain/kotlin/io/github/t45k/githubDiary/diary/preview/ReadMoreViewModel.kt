@@ -94,9 +94,9 @@ class ReadMoreViewModel(
                 _uiState.update { current ->
                     val mergedEntries = (current.entries + loadedEntries)
                         .associateBy { it.date }
-                        .toSortedMap()
-                        .values
-                        .toList()
+                        .entries
+                        .sortedBy { it.key }
+                        .map { it.value }
                     current.copy(entries = mergedEntries)
                 }
 
