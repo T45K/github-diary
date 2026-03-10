@@ -51,54 +51,86 @@ private data class ParsedMarkdown(
     val tree: ASTNode,
 )
 
+private data class NewlineInsertion(
+    val addedIndex: Int,
+    val lineStart: Int,
+    val line: String,
+)
+
+private data class ContinuationContext(
+    val insertion: NewlineInsertion,
+    val node: ASTNode?,
+    val quoteContext: BlockquoteContext,
+)
+
+private sealed interface EditorAction {
+    data class InsertPrefix(
+        val position: Int,
+        val prefix: String,
+    ) : EditorAction
+
+    data class ReplaceRange(
+        val start: Int,
+        val end: Int,
+        val replacement: String,
+    ) : EditorAction
+}
+
+private sealed interface ContinuationTarget {
+    data object Blockquote : ContinuationTarget
+    data object ListItem : ContinuationTarget
+    data object PlainListPattern : ContinuationTarget
+}
+
 internal fun applyMarkdownContinuation(
     oldText: String,
     newText: String,
     textFieldState: TextFieldState,
 ) {
-    // Find the first differing position to locate the added character
-    var addedIndex = -1
-    for (i in newText.indices) {
-        if (i >= oldText.length || newText[i] != oldText[i]) {
-            addedIndex = i
-            break
-        }
-    }
-    if (addedIndex == -1 || newText[addedIndex] != '\n') return
-
     val parsedMarkdown = parseMarkdown(oldText)
-
-    // Check if inside fenced code block
-    if (isInsideCodeFence(parsedMarkdown, addedIndex)) return
-
-    val textBeforeNewline = newText.substring(0, addedIndex)
-    val lastLineStart = textBeforeNewline.lastIndexOf('\n') + 1
-    val lastLine = textBeforeNewline.substring(lastLineStart)
-
-    val continuation = buildContinuation(parsedMarkdown, lastLineStart, lastLine) ?: return
+    val editorAction = resolveEditorAction(parsedMarkdown, oldText, newText) ?: return
 
     textFieldState.edit {
-        if (continuation.isEmpty) {
-            val action = determineEmptyMarkerAction(parsedMarkdown, lastLineStart)
-            when (action) {
-                EmptyMarkerAction.REMOVE -> {
-                    replace(lastLineStart, addedIndex + 1, "")
-                    placeCursorAfterCharAt(lastLineStart - 1)
-                }
-                EmptyMarkerAction.MAKE_NON_TIGHT -> {
-                    val blankContent = getBlankLineContent(continuation.quotePrefix)
-                    val replacement = "\n$blankContent\n$lastLine"
-                    replace(lastLineStart - 1, addedIndex + 1, replacement)
-                    placeCursorAfterCharAt(lastLineStart - 1 + replacement.length - 1)
-                }
+        when (editorAction) {
+            is EditorAction.InsertPrefix -> {
+                replace(editorAction.position, editorAction.position, editorAction.prefix)
+                placeCursorAfterCharAt(editorAction.position + editorAction.prefix.length - 1)
             }
-        } else {
-            val insertPosition = addedIndex + 1
-            val prefix = continuation.prefix
-            replace(insertPosition, insertPosition, prefix)
-            placeCursorAfterCharAt(insertPosition + prefix.length - 1)
+
+            is EditorAction.ReplaceRange -> {
+                replace(editorAction.start, editorAction.end, editorAction.replacement)
+                placeCursorAfterCharAt(editorAction.start + editorAction.replacement.length - 1)
+            }
         }
     }
+}
+
+private fun resolveEditorAction(
+    parsedMarkdown: ParsedMarkdown,
+    oldText: String,
+    newText: String,
+): EditorAction? {
+    val insertion = findNewlineInsertion(oldText, newText) ?: return null
+    if (isInsideCodeFence(parsedMarkdown, insertion.addedIndex)) return null
+
+    val continuationContext = buildContinuationContext(parsedMarkdown, insertion)
+    val continuation = buildContinuation(continuationContext) ?: return null
+    return continuation.toEditorAction(parsedMarkdown, insertion)
+}
+
+private fun findNewlineInsertion(oldText: String, newText: String): NewlineInsertion? {
+    val addedIndex = newText.indices.firstOrNull { index ->
+        index >= oldText.length || newText[index] != oldText[index]
+    } ?: return null
+    if (newText[addedIndex] != '\n') return null
+
+    val textBeforeNewline = newText.substring(0, addedIndex)
+    val lineStart = textBeforeNewline.lastIndexOf('\n') + 1
+    return NewlineInsertion(
+        addedIndex = addedIndex,
+        lineStart = lineStart,
+        line = textBeforeNewline.substring(lineStart),
+    )
 }
 
 // --- Parser-based features ---
@@ -117,8 +149,7 @@ private fun isInsideCodeFence(parsedMarkdown: ParsedMarkdown, position: Int): Bo
         node = parsedMarkdown.tree,
         position = position.coerceAtMost(parsedMarkdown.text.lastIndex),
     ) ?: return false
-    val codeFence = node.getParentOfType(MarkdownElementTypes.CODE_FENCE)
-        ?: if (node.type == MarkdownElementTypes.CODE_FENCE) node else return false
+    val codeFence = node.findSelfOrParentOfType(MarkdownElementTypes.CODE_FENCE) ?: return false
 
     val hasEnd = codeFence.children.any { it.type == MarkdownTokenTypes.CODE_FENCE_END }
     return if (!hasEnd) {
@@ -141,32 +172,27 @@ private fun determineEmptyMarkerAction(parsedMarkdown: ParsedMarkdown, markerLin
     val emptyItemIndex = listItems.indexOfFirst { it.startOffset >= markerLineStart }
     if (emptyItemIndex != 1) return EmptyMarkerAction.REMOVE
 
-    return if (isListTight(listNode)) EmptyMarkerAction.MAKE_NON_TIGHT else EmptyMarkerAction.REMOVE
+    return listNode
+        .takeIf(::isListTight)
+        ?.let { EmptyMarkerAction.MAKE_NON_TIGHT }
+        ?: EmptyMarkerAction.REMOVE
 }
 
 private fun findInnermostList(parsedMarkdown: ParsedMarkdown, position: Int): ASTNode? {
     val probePosition = position.coerceAtMost((parsedMarkdown.text.length - 1).coerceAtLeast(0))
     val node = findDeepestNodeContaining(parsedMarkdown.tree, probePosition) ?: return null
-    return node.getParentOfType(MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.UNORDERED_LIST)
-        ?: if (node.type == MarkdownElementTypes.ORDERED_LIST || node.type == MarkdownElementTypes.UNORDERED_LIST) {
-            node
-        } else {
-            null
-        }
+    return node.findSelfOrParentOfTypes(
+        MarkdownElementTypes.ORDERED_LIST,
+        MarkdownElementTypes.UNORDERED_LIST,
+    )
 }
 
-private fun isListTight(listNode: ASTNode): Boolean {
-    var prevWasEol = false
-    for (child in listNode.children) {
-        if (child.type == MarkdownTokenTypes.EOL) {
-            if (prevWasEol) return false
-            prevWasEol = true
-        } else {
-            prevWasEol = false
+private fun isListTight(listNode: ASTNode): Boolean =
+    listNode.children
+        .zipWithNext()
+        .none { (previous, current) ->
+            previous.type == MarkdownTokenTypes.EOL && current.type == MarkdownTokenTypes.EOL
         }
-    }
-    return true
-}
 
 private fun findDeepestNodeContaining(node: ASTNode, position: Int): ASTNode? {
     if (position < node.startOffset || position > node.endOffset) return null
@@ -174,6 +200,12 @@ private fun findDeepestNodeContaining(node: ASTNode, position: Int): ASTNode? {
         findDeepestNodeContaining(child, position)
     } ?: node
 }
+
+private fun ASTNode.findSelfOrParentOfType(type: org.intellij.markdown.IElementType): ASTNode? =
+    takeIf { it.type == type } ?: getParentOfType(type)
+
+private fun ASTNode.findSelfOrParentOfTypes(vararg types: org.intellij.markdown.IElementType): ASTNode? =
+    types.firstNotNullOfOrNull(::findSelfOrParentOfType)
 
 private fun getBlankLineContent(quotePrefix: String): String {
     return quotePrefix.trimEnd()
@@ -187,91 +219,145 @@ private data class Continuation(
     val quotePrefix: String = "",
 )
 
-private fun buildContinuation(
+private fun buildContinuationContext(
     parsedMarkdown: ParsedMarkdown,
-    lineStart: Int,
-    line: String,
-): Continuation? {
-    if (line.isEmpty()) return null
+    insertion: NewlineInsertion,
+): ContinuationContext {
+    val quoteContext = parseBlockquoteContext(insertion.line)
+    val probePosition = (insertion.lineStart + insertion.line.length - 1)
+        .coerceAtMost((parsedMarkdown.text.length - 1).coerceAtLeast(0))
+    return ContinuationContext(
+        insertion = insertion,
+        node = findDeepestNodeContaining(parsedMarkdown.tree, probePosition),
+        quoteContext = quoteContext,
+    )
+}
 
-    val quoteContext = parseBlockquoteContext(line)
-    val probePosition = (lineStart + line.length - 1).coerceAtMost((parsedMarkdown.text.length - 1).coerceAtLeast(0))
-    val node = findDeepestNodeContaining(parsedMarkdown.tree, probePosition)
-    val isBlockQuote = node?.getParentOfType(MarkdownElementTypes.BLOCK_QUOTE) != null || node?.type == MarkdownElementTypes.BLOCK_QUOTE
+private fun Continuation.toEditorAction(
+    parsedMarkdown: ParsedMarkdown,
+    insertion: NewlineInsertion,
+): EditorAction {
+    if (!isEmpty) {
+        return EditorAction.InsertPrefix(
+            position = insertion.addedIndex + 1,
+            prefix = prefix,
+        )
+    }
 
-    if (isBlockQuote) {
-        buildListContinuation(quoteContext.content)?.let { continuation ->
-            return continuation.copy(
+    return when (determineEmptyMarkerAction(parsedMarkdown, insertion.lineStart)) {
+        EmptyMarkerAction.REMOVE -> EditorAction.ReplaceRange(
+            start = insertion.lineStart,
+            end = insertion.addedIndex + 1,
+            replacement = "",
+        )
+
+        EmptyMarkerAction.MAKE_NON_TIGHT -> {
+            val replacement = "\n${getBlankLineContent(quotePrefix)}\n${insertion.line}"
+            EditorAction.ReplaceRange(
+                start = insertion.lineStart - 1,
+                end = insertion.addedIndex + 1,
+                replacement = replacement,
+            )
+        }
+    }
+}
+
+private fun buildContinuation(context: ContinuationContext): Continuation? {
+    if (context.insertion.line.isEmpty()) return null
+
+    return when (resolveContinuationTarget(context.node)) {
+        ContinuationTarget.Blockquote -> buildBlockquoteContinuation(context.quoteContext)
+        ContinuationTarget.ListItem,
+        ContinuationTarget.PlainListPattern,
+            -> buildListContinuation(context.insertion.line)
+    }
+}
+
+private fun resolveContinuationTarget(node: ASTNode?): ContinuationTarget = when {
+    node.isOfTypeOrInside(MarkdownElementTypes.BLOCK_QUOTE) -> ContinuationTarget.Blockquote
+    node.isOfTypeOrInside(MarkdownElementTypes.LIST_ITEM) -> ContinuationTarget.ListItem
+    else -> ContinuationTarget.PlainListPattern
+}
+
+private fun ASTNode?.isOfTypeOrInside(type: org.intellij.markdown.IElementType): Boolean =
+    this?.type == type || this?.getParentOfType(type) != null
+
+private fun buildBlockquoteContinuation(quoteContext: BlockquoteContext): Continuation =
+    buildListContinuation(quoteContext.content)
+        ?.let { continuation ->
+            continuation.copy(
                 prefix = quoteContext.prefix + continuation.prefix,
                 quotePrefix = quoteContext.prefix,
             )
         }
+        ?: quoteContext.toPlainBlockquoteContinuation()
 
-        return if (quoteContext.content.isEmpty()) {
-            Continuation(prefix = "", isEmpty = true, quotePrefix = quoteContext.prefix)
-        } else {
-            Continuation(prefix = quoteContext.prefix, isEmpty = false, quotePrefix = quoteContext.prefix)
-        }
+private fun BlockquoteContext.toPlainBlockquoteContinuation(): Continuation =
+    if (content.isEmpty()) {
+        Continuation(prefix = "", isEmpty = true, quotePrefix = prefix)
+    } else {
+        Continuation(prefix = prefix, isEmpty = false, quotePrefix = prefix)
     }
 
-    val listItem = node?.getParentOfType(MarkdownElementTypes.LIST_ITEM)
-        ?: if (node?.type == MarkdownElementTypes.LIST_ITEM) node else null
-    if (listItem != null) {
-        return buildListContinuation(line)
-    }
+private fun buildListContinuation(line: String): Continuation? =
+    parseBulletListMarker(line)?.toContinuation()
+        ?: parseOrderedListMarker(line)?.toContinuation()
 
-    return buildListContinuation(line)
+private fun BulletListMarker.toContinuation(): Continuation = when {
+    content.isEmpty() -> Continuation(prefix = "", isEmpty = true)
+    checkbox != null -> Continuation(prefix = "${indent}${marker} ${uncheckedCheckboxMarker}", isEmpty = false)
+    else -> Continuation(prefix = "${indent}${marker} ", isEmpty = false)
 }
 
-private fun buildListContinuation(line: String): Continuation? {
-    parseBulletListMarker(line)?.let { marker ->
-        return if (marker.content.isEmpty()) {
-            Continuation(prefix = "", isEmpty = true)
-        } else if (marker.checkbox != null) {
-            Continuation(prefix = "${marker.indent}${marker.marker} ${uncheckedCheckboxMarker}", isEmpty = false)
-        } else {
-            Continuation(prefix = "${marker.indent}${marker.marker} ", isEmpty = false)
-        }
+private fun OrderedListMarker.toContinuation(): Continuation =
+    if (content.isEmpty()) {
+        Continuation(prefix = "", isEmpty = true)
+    } else {
+        Continuation(prefix = "${indent}${number + 1}${delimiter} ", isEmpty = false)
     }
-
-    parseOrderedListMarker(line)?.let { marker ->
-        return if (marker.content.isEmpty()) {
-            Continuation(prefix = "", isEmpty = true)
-        } else {
-            Continuation(prefix = "${marker.indent}${marker.number + 1}${marker.delimiter} ", isEmpty = false)
-        }
-    }
-
-    return null
-}
 
 private data class BlockquoteContext(
     val prefix: String,
     val content: String,
 )
 
+private data class BlockquoteSegment(
+    val prefix: String,
+    val nextIndex: Int,
+)
+
 private fun parseBlockquoteContext(line: String): BlockquoteContext {
-    var index = 0
-    val prefix = buildString {
-        while (index < line.length) {
-            val indentStart = index
-            while (index < line.length && line[index].isWhitespace() && line[index] != '\n') {
-                index++
-            }
-            if (index >= line.length || line[index] != '>') {
-                index = indentStart
-                break
-            }
-            append(line, indentStart, index + 1)
-            index++
-            if (index < line.length && line[index] == ' ') {
-                append(' ')
-                index++
-            }
-        }
-    }
-    return BlockquoteContext(prefix = prefix, content = line.substring(index))
+    val segments = generateSequence(parseBlockquoteSegment(line, 0)) { segment ->
+        parseBlockquoteSegment(line, segment.nextIndex)
+    }.toList()
+    val contentStart = segments.lastOrNull()?.nextIndex ?: 0
+
+    return BlockquoteContext(
+        prefix = segments.joinToString(separator = "") { it.prefix },
+        content = line.substring(contentStart),
+    )
 }
+
+private fun parseBlockquoteSegment(line: String, startIndex: Int): BlockquoteSegment? {
+    if (startIndex >= line.length) return null
+
+    val indentEnd = line.indexOfFirstNonBlockquoteIndent(startIndex)
+    if (indentEnd >= line.length || line[indentEnd] != '>') return null
+
+    val nextIndex = (indentEnd + 1).let { markerEnd ->
+        if (markerEnd < line.length && line[markerEnd] == ' ') markerEnd + 1 else markerEnd
+    }
+
+    return BlockquoteSegment(
+        prefix = line.substring(startIndex, nextIndex),
+        nextIndex = nextIndex,
+    )
+}
+
+private fun String.indexOfFirstNonBlockquoteIndent(startIndex: Int): Int =
+    drop(startIndex)
+        .indexOfFirst { !it.isWhitespace() || it == '\n' }
+        .let { offset -> if (offset == -1) length else startIndex + offset }
 
 private data class BulletListMarker(
     val indent: String,
@@ -317,22 +403,25 @@ private fun parseOrderedListMarker(line: String): OrderedListMarker? {
     val indentEnd = line.indexOfFirst { !it.isWhitespace() }.let { if (it == -1) line.length else it }
     if (indentEnd >= line.length || !line[indentEnd].isDigit()) return null
 
-    var index = indentEnd
-    while (index < line.length && line[index].isDigit()) {
-        index++
-    }
-    if (index >= line.length || line[index] !in setOf('.', ')')) return null
-    val delimiter = line[index]
-    index++
-    if (index >= line.length || line[index] != ' ') return null
+    val numberEnd = line.indexOfFirstFrom(indentEnd) { !it.isDigit() }
+    if (numberEnd == line.length || line[numberEnd] !in setOf('.', ')')) return null
+
+    val delimiter = line[numberEnd]
+    val contentStart = numberEnd + 1
+    if (contentStart >= line.length || line[contentStart] != ' ') return null
 
     return OrderedListMarker(
         indent = line.substring(0, indentEnd),
-        number = line.substring(indentEnd, index - 1).toInt(),
+        number = line.substring(indentEnd, numberEnd).toInt(),
         delimiter = delimiter,
-        content = line.substring(index + 1),
+        content = line.substring(contentStart + 1),
     )
 }
+
+private fun String.indexOfFirstFrom(startIndex: Int, predicate: (Char) -> Boolean): Int =
+    drop(startIndex)
+        .indexOfFirst(predicate)
+        .let { offset -> if (offset == -1) length else startIndex + offset }
 
 private fun parseCheckbox(line: String, startIndex: Int): String? {
     val checkboxEndIndex = startIndex + 3
