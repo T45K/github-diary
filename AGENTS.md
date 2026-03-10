@@ -33,6 +33,7 @@ The source code is located in `app/src/main/kotlin/`:
 ## Development Patterns
 - **ViewModel per screen:** Each screen has a ViewModel extending `androidx.lifecycle.ViewModel` with `mutableStateOf` for Compose state.
 - **Repository pattern:** `GitHubClient` handles REST API calls; repositories abstract data access.
+- **Functional & Immutable style:** Prefer functional programming and immutable programming models; design logic around pure functions, immutable data, and transformations with minimized side effects.
 - **Enum-based routing:** `NavRoute` enum manages navigation via `AppViewModel.currentRoute`.
 - **Error Handling:** Use Arrow `Either` in settings validation for functional error handling.
 
