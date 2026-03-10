@@ -71,4 +71,35 @@ class DiaryContentTest {
         // then
         assert(diary.content.startsWith("# 2026/01/05"))
     }
+
+    @Test
+    fun `isBlankOrHeaderOnly returns true when content is blank`() {
+        // given
+        val diary = DiaryContent(LocalDate(2026, 1, 2), "")
+
+        // then
+        assert(diary.isBlankOrHeaderOnly)
+    }
+
+    @Test
+    fun `isBlankOrHeaderOnly returns true when content has only header`() {
+        // given
+        val date = LocalDate(2026, 1, 2)
+
+        // when
+        val diary = DiaryContent.init(date)
+
+        // then
+        assert(diary.isBlankOrHeaderOnly)
+    }
+
+    @Test
+    fun `isBlankOrHeaderOnly returns false when content has body`() {
+        // given
+        val date = LocalDate(2026, 1, 2)
+        val diary = DiaryContent(date, "# 2026/01/02 (Fri)\n\nBody")
+
+        // then
+        assert(!diary.isBlankOrHeaderOnly)
+    }
 }

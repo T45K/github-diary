@@ -25,6 +25,9 @@ data class DiaryContent(val date: LocalDate, val content: String) {
         }
     }
 
+    val isBlankOrHeaderOnly: Boolean
+        get() = content.isBlank() || content == init(date).content
+
     fun updateContent(content: String): DiaryContent {
         val diaryHeader = "# ${date.format(diaryTitleDateFormat)}"
         return if (content.startsWith(diaryHeader)) {

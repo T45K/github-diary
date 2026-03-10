@@ -114,8 +114,7 @@ class ReadMoreViewModel(
 
     private suspend fun loadEntry(date: LocalDate): ReadMoreDiaryEntryUiState = try {
         val diaryContent = diaryRepository.findByDate(date)
-        val headerOnly = DiaryContent.init(date).content
-        if (diaryContent.content.isBlank() || diaryContent.content == headerOnly) {
+        if (diaryContent.isBlankOrHeaderOnly) {
             ReadMoreDiaryEntryUiState.NotFound(date)
         } else {
             ReadMoreDiaryEntryUiState.Success(date = date, content = diaryContent.content)

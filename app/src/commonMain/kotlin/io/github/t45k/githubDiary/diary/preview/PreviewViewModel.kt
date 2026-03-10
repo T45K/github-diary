@@ -45,8 +45,7 @@ class PreviewViewModel(
 
             try {
                 val diaryContent = diaryRepository.findByDate(date)
-                val headerOnly = DiaryContent.init(date).content
-                if (diaryContent.content.isBlank() || diaryContent.content == headerOnly) {
+                if (diaryContent.isBlankOrHeaderOnly) {
                     _uiState.value = PreviewUiState.NotFound(date)
                 } else {
                     _uiState.value = PreviewUiState.Success(
