@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.10"
-compose = "1.10.2"
+compose = "1.10.3"
 androidGradlePlugin = "9.0.0-alpha06"
 foojayResolver = "1.0.0"
 java = "25"
