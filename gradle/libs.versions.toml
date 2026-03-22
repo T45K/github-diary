@@ -20,7 +20,7 @@ koin = "4.1.1"
 junit = "6.0.3"
 coroutines = "1.10.2"
 logback = "1.5.32"
-activityCompose = "1.10.1"
+activityCompose = "1.13.0"
 jetbrainsMarkdown = "0.7.3"
 
 [libraries]
