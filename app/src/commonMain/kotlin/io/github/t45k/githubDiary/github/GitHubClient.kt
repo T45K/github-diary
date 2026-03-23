@@ -7,6 +7,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -22,6 +23,10 @@ import kotlinx.serialization.json.Json
  * https://docs.github.com/ja/rest/repos/contents
  */
 open class GitHubClient(private val host: String = "https://api.github.com") {
+    fun close() {
+        client.close()
+    }
+
     private val client: HttpClient = HttpClient {
         install(ContentNegotiation) {
             json(
@@ -89,6 +94,29 @@ open class GitHubClient(private val host: String = "https://api.github.com") {
         val response = client.get {
             url.path("repos", owner, repo)
             bearerAuth(accessToken.value)
+        }
+        return if (response.status.isSuccess()) {
+            response.body()
+        } else {
+            null
+        }
+    }
+
+    open suspend fun searchCode(
+        accessToken: GitHubPersonalAccessToken,
+        query: String,
+        owner: String,
+        repo: String,
+        page: Int = 1,
+        perPage: Int = 30,
+    ): SearchCodeResponse? {
+        val response = client.get {
+            url.path("search", "code")
+            bearerAuth(accessToken.value)
+            accept(ContentType.parse("application/vnd.github.text-match+json"))
+            parameter("q", "$query repo:$owner/$repo")
+            parameter("page", page)
+            parameter("per_page", perPage)
         }
         return if (response.status.isSuccess()) {
             response.body()

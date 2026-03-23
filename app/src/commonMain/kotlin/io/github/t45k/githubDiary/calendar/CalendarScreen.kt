@@ -15,13 +15,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +47,7 @@ fun CalendarScreen(
     onNext: () -> Unit,
     onGoalPreview: (YearMonth) -> Unit,
     onSelect: (LocalDate) -> Unit,
+    onSearch: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -56,6 +63,7 @@ fun CalendarScreen(
                     onPrev = onPrev,
                     onNext = onNext,
                     onGoalPreview = { _ -> },
+                    onSearch = onSearch,
                 )
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -71,6 +79,7 @@ fun CalendarScreen(
                     onPrev = onPrev,
                     onNext = onNext,
                     onGoalPreview = onGoalPreview,
+                    onSearch = onSearch,
                 )
                 CalendarContent(
                     calendar = uiState.calendar,
@@ -88,6 +97,7 @@ private fun CalendarHeader(
     onPrev: () -> Unit,
     onNext: () -> Unit,
     onGoalPreview: (yearMonth: YearMonth) -> Unit,
+    onSearch: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -103,6 +113,9 @@ private fun CalendarHeader(
             color = MaterialTheme.colors.onSurface,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(onClick = onSearch) {
+                Icon(Icons.Default.Search, contentDescription = "検索")
+            }
             Button(onClick = { onGoalPreview(yearMonth) }) { Text("Goal") }
             Button(onClick = onPrev) { Text("<") }
             Button(onClick = onNext) { Text(">") }
@@ -181,7 +194,9 @@ private fun DayCell(
     val (localDate, hasContent) = day
 
     Box(
-        modifier = modifier.clickable { onSelect(localDate) },
+        modifier = modifier
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable { onSelect(localDate) },
     ) {
         Column(
             modifier = Modifier

@@ -11,6 +11,8 @@ import io.github.t45k.githubDiary.github.GitHubClient
 import io.github.t45k.githubDiary.monthlyNote.GoalRepository
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
+import io.github.t45k.githubDiary.search.SearchRepository
+import io.github.t45k.githubDiary.search.SearchViewModel
 import io.github.t45k.githubDiary.setting.SettingRepository
 import io.github.t45k.githubDiary.setting.SettingsViewModel
 import io.github.t45k.githubDiary.ui.AppViewModel
@@ -33,9 +35,11 @@ val appModule = module {
     single { CalendarRepository(client = get(), settingRepository = get()) }
     single { DiaryRepository(client = get(), settingRepository = get()) }
     single { GoalRepository(client = get(), settingRepository = get()) }
+    single { SearchRepository(client = get(), settingRepository = get()) }
 
     // ViewModels
     viewModel { SettingsViewModel(settingRepository = get()) }
+    viewModel { SearchViewModel(searchRepository = get()) }
     viewModel { AppViewModel(get()) }
 
     viewModel { (yearMonth: YearMonth) ->

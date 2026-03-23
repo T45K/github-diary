@@ -21,7 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -43,6 +45,8 @@ import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditScreen
 import io.github.t45k.githubDiary.monthlyNote.edit.GoalEditViewModel
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewScreen
 import io.github.t45k.githubDiary.monthlyNote.preview.GoalPreviewViewModel
+import io.github.t45k.githubDiary.search.SearchScreen
+import io.github.t45k.githubDiary.search.SearchViewModel
 import io.github.t45k.githubDiary.setting.SettingsScreen
 import io.github.t45k.githubDiary.setting.SettingsViewModel
 import io.github.t45k.githubDiary.util.DateProvider
@@ -50,7 +54,6 @@ import io.github.t45k.githubDiary.util.isApplicableForVimium
 import io.github.t45k.githubDiary.util.onKeyPressed
 import io.github.t45k.githubDiary.util.onKeyWithCommandPressed
 import io.github.t45k.githubDiary.util.toVimiumDay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.onDay
@@ -101,8 +104,7 @@ fun AppScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-                .padding(16.dp),
+                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
         ) {
             NavDisplay(
                 backStack = backStack,
@@ -112,8 +114,7 @@ fun AppScreen(
                         val yearMonth = key.yearMonth
                         val calendarViewModel: CalendarViewModel = koinViewModel(key = yearMonth.toString()) { parametersOf(yearMonth) }
                         val uiState by calendarViewModel.uiState.collectAsState()
-                        val vimiumModeFlow = MutableStateFlow(false)
-                        val isVimiumModeEnabled by vimiumModeFlow.collectAsState()
+                        var isVimiumModeEnabled by remember { mutableStateOf(false) }
 
                         val navigateToPrevMonth: () -> Unit = { navigateToCalendar(yearMonth.minusMonth()) }
                         val navigateToNextMonth: () -> Unit = { navigateToCalendar(yearMonth.plusMonth()) }
@@ -132,8 +133,8 @@ fun AppScreen(
                                 .onKeyWithCommandPressed({ it.key == Key.R }) { calendarRefreshEvent.requestRefresh(yearMonth) }
                                 .onKeyPressed({ it.key == Key.DirectionLeft }) { navigateToPrevMonth() }
                                 .onKeyPressed({ it.key == Key.DirectionRight }) { navigateToNextMonth() }
-                                .onKeyPressed({ !isVimiumModeEnabled && it.key == Key.F }) { vimiumModeFlow.value = true }
-                                .onKeyPressed({ isVimiumModeEnabled && it.key == Key.Escape }) { vimiumModeFlow.value = false }
+                                .onKeyPressed({ !isVimiumModeEnabled && it.key == Key.F }) { isVimiumModeEnabled = true }
+                                .onKeyPressed({ isVimiumModeEnabled && it.key == Key.Escape }) { isVimiumModeEnabled = false }
                                 .onKeyPressed({ isVimiumModeEnabled && it.key.isApplicableForVimium() }) {
                                     val date = yearMonth.onDay(it.key.toVimiumDay())
                                     viewModel.push(NavRoute.DiaryPreview(date))
@@ -146,6 +147,7 @@ fun AppScreen(
                                 onNext = navigateToNextMonth,
                                 onSelect = { date -> viewModel.push(NavRoute.DiaryPreview(date)) },
                                 onGoalPreview = { yearMonth -> viewModel.push(NavRoute.GoalPreview(yearMonth)) },
+                                onSearch = { viewModel.push(NavRoute.Search) },
                             )
                         }
                     }
@@ -291,6 +293,27 @@ fun AppScreen(
                                         }
                                     }
                                 },
+                            )
+                        }
+                    }
+
+                    entry<NavRoute.Search> {
+                        val searchViewModel: SearchViewModel = koinViewModel()
+                        val uiState by searchViewModel.uiState.collectAsState()
+                        val query by searchViewModel.query.collectAsState()
+
+                        SwipeNavigationContainer(
+                            onSwipeBack = { viewModel.pop() },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            SearchScreen(
+                                uiState = uiState,
+                                query = query,
+                                onQueryChange = { searchViewModel.updateQuery(it) },
+                                onSearch = { searchViewModel.search() },
+                                onLoadMore = { searchViewModel.loadNextPage() },
+                                onResultClick = { date -> viewModel.push(NavRoute.DiaryPreview(date)) },
+                                onBack = { viewModel.pop() },
                             )
                         }
                     }
