@@ -5,6 +5,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/**
+ * Android implementation of [SettingFileStorage].
+ * Uses [AndroidContextProvider.applicationContext].filesDir to store settings.json
+ * in the app's internal storage directory, which is private to the application.
+ */
 class AndroidSettingFileStorage : SettingFileStorage {
     private val settingFile: File by lazy {
         File(AndroidContextProvider.applicationContext.filesDir, "settings.json").also { file ->

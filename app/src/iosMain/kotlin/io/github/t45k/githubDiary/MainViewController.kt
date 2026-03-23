@@ -9,6 +9,13 @@ import org.koin.core.context.startKoin
 import org.koin.core.error.KoinApplicationAlreadyStartedException
 import platform.UIKit.UIViewController
 
+/**
+ * Starts Koin DI if not already started.
+ * KoinApplicationAlreadyStartedException can occur because SwiftUI's lifecycle
+ * may recreate the UIViewController multiple times (e.g., on scene phase changes
+ * or configuration changes), causing MainViewController() to be called again
+ * while Koin is already initialized from a previous invocation in the same process.
+ */
 private fun startKoinIfNeeded() {
     try {
         startKoin {

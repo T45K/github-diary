@@ -1,4 +1,6 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
@@ -71,8 +73,6 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.logging)
-
             implementation(libs.kotlinx.serialization.json)
 
             implementation(libs.arrow.core)
@@ -112,6 +112,8 @@ kotlin {
             }
         }
 
+        // Tests are in desktopTest because JUnit Jupiter is JVM-only.
+        // Migrating to kotlin.test would enable moving platform-independent tests to commonTest.
         val desktopTest by getting {
             dependencies {
                 implementation(libs.junit.jupiter)
@@ -127,7 +129,7 @@ compose.desktop {
         javaHome = desktopPackagingJavaHome.get()
 
         nativeDistributions {
-            targetFormats(Dmg)
+            targetFormats(Dmg, Msi, Deb)
             packageName = "GitHub Diary"
             packageVersion = libs.versions.appVersionName.get()
 

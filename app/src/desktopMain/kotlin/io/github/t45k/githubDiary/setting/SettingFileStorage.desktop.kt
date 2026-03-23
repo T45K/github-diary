@@ -11,6 +11,11 @@ import kotlin.io.path.notExists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
+/**
+ * Desktop implementation of [SettingFileStorage].
+ * Stores settings as a JSON file at ~/.github_diary/settings.json.
+ * The directory and file are created automatically on initialization if they don't exist.
+ */
 class DesktopSettingFileStorage : SettingFileStorage {
     private val settingFilePath = Path(System.getenv("HOME"), ".github_diary", "settings.json")
 

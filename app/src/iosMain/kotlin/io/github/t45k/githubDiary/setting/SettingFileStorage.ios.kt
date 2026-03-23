@@ -17,6 +17,14 @@ import platform.posix.fseek
 import platform.posix.ftell
 import platform.posix.fwrite
 
+/**
+ * iOS implementation of [SettingFileStorage].
+ * Stores settings.json in the app's NSDocumentDirectory.
+ *
+ * Uses POSIX fopen/fread/fwrite instead of NSFileManager because Kotlin/Native's
+ * interop with Foundation file APIs requires verbose cinterop boilerplate.
+ * POSIX file I/O is simpler, more predictable, and works reliably via kotlinx.cinterop.
+ */
 @OptIn(ExperimentalForeignApi::class)
 class IosSettingFileStorage : SettingFileStorage {
     private val settingsPath: String = run {

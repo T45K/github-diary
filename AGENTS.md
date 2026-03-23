@@ -49,3 +49,8 @@ The source code is located in `app/src/main/kotlin/`:
 - **Calendar:** Configured for Sunday-start weeks.
 - **Diary header:** Uses `# YYYY/MM/DD (Day)` format.
 - **Specification:** Full feature specification is available in `spec/spec.md` (Japanese).
+
+## Compose Patterns
+- **State hoisting:** Each screen receives `UiState` and callback lambdas from `AppScreen`. ViewModel holds `MutableStateFlow<UiState>` internally and exposes `StateFlow<UiState>`.
+- **`remember` / `derivedStateOf`:** Use `remember { mutableStateOf(...) }` for local UI state. Use `remember { derivedStateOf { ... } }` for values computed from other state.
+- **Preview:** Place `@Preview` composables in `desktopMain` (e.g., `CalendarScreenPreview.kt`). Use `@PreviewParameter` with `PreviewParameterProvider` for state variants.

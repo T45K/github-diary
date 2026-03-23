@@ -13,6 +13,15 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 
+/**
+ * Desktop implementation of [SwipeNavigationContainer].
+ * macOSのトラックパッドでの二本指水平スクロールイベント（PointerEventType.Scroll）を検出し、
+ * 累積スクロール量がしきい値を超えた時点で戻る/進むアクションを発火する。
+ *
+ * Note: ExperimentalComposeUiApi is required for [onPointerEvent] which provides
+ * low-level pointer event handling needed to capture trackpad scroll deltas.
+ * There is currently no stable API alternative for this use case in Compose Desktop.
+ */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun SwipeNavigationContainer(
