@@ -8,6 +8,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.darkColors
 import io.github.t45k.githubDiary.ui.AppScreen
+import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 
 class MainActivity : ComponentActivity() {
@@ -17,8 +18,10 @@ class MainActivity : ComponentActivity() {
 
         AndroidContextProvider.init(this)
 
-        startKoin {
-            modules(appModule)
+        if (GlobalContext.getKoinApplicationOrNull() == null) {
+            startKoin {
+                modules(appModule)
+            }
         }
 
         setContent {

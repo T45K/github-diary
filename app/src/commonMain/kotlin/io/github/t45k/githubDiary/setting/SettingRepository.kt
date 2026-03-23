@@ -29,7 +29,7 @@ open class SettingRepository(
             return null to null
         }
         val pat = json.pat?.let { GitHubPersonalAccessToken(it) }
-        val path = json.path?.let { GitHubRepositoryPath(it).getOrNull()!! }
+        val path = json.path?.let { GitHubRepositoryPath(it).getOrNull() }
         return pat to path
     }
 

@@ -102,7 +102,7 @@ class CalendarViewModelTest {
         assert(state is CalendarUiState.Error)
         val errorState = state as CalendarUiState.Error
         assert(errorState.yearMonth == YearMonth(2026, 1))
-        assert(errorState.message == "Failed to load")
+        assert(errorState.message == "Failed to load calendar")
     }
 
     @Test

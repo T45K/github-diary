@@ -48,21 +48,17 @@ class CalendarViewModel(
     }
 
     private fun load(yearMonth: YearMonth) {
-        _uiState.value = CalendarUiState.Loading(yearMonth)
-
         viewModelScope.launch {
-            val calendar = calendarRepository.findByMonth(yearMonth)
-
-            if (calendar.days.isEmpty()) {
-                _uiState.value = CalendarUiState.Error(
-                    yearMonth,
-                    message = "Failed to load",
-                )
-            } else {
-                _uiState.value = CalendarUiState.Success(
-                    yearMonth = yearMonth,
-                    calendar = calendar,
-                )
+            _uiState.value = CalendarUiState.Loading(yearMonth)
+            try {
+                val calendar = calendarRepository.findByMonth(yearMonth)
+                _uiState.value = if (calendar.days.isEmpty()) {
+                    CalendarUiState.Error(yearMonth, "Failed to load calendar")
+                } else {
+                    CalendarUiState.Success(yearMonth, calendar)
+                }
+            } catch (e: Exception) {
+                _uiState.value = CalendarUiState.Error(yearMonth, e.message ?: "Unknown error")
             }
         }
     }
