@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
@@ -30,6 +31,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -61,10 +65,13 @@ fun GoalEditScreen(
     updateBackMoney: (amount: Int) -> Unit,
     save: () -> Unit,
 ) {
-    val canSave = when (uiState) {
-        is GoalEditUiState.Editing -> !uiState.isSaving
-//        is GoalEditUiState.Error -> !uiState.isSaving
-        else -> false
+    val canSave by remember {
+        derivedStateOf {
+            when (uiState) {
+                is GoalEditUiState.Editing -> !uiState.isSaving
+                else -> false
+            }
+        }
     }
 
     Scaffold(
@@ -93,7 +100,7 @@ fun GoalEditScreen(
     ) { padding ->
         val scrollState = rememberScrollState()
         val focusManager = LocalFocusManager.current
-        Column(Modifier.padding(padding).padding(16.dp).verticalScroll(scrollState)) {
+        Column(Modifier.padding(padding).padding(16.dp).imePadding().verticalScroll(scrollState)) {
             when (uiState) {
                 is GoalEditUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
