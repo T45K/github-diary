@@ -26,6 +26,6 @@ data class TextMatch(
 
 @Serializable
 data class TextMatchDetail(
-    val text: String,
+    val text: String? = null,
     val indices: List<Int> = emptyList(),
 )
