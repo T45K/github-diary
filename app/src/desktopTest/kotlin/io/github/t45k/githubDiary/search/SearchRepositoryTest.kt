@@ -81,6 +81,35 @@ class SearchRepositoryTest {
     }
 
     @Test
+    fun `search returns results sorted by date descending`() = runTest {
+        // given
+        val settingRepo = SearchFakeSettingRepository(
+            loadResult = GitHubPersonalAccessToken("token") to GitHubRepositoryPath("owner", "repo"),
+        )
+        val response = SearchCodeResponse(
+            totalCount = 3,
+            incompleteResults = false,
+            items = listOf(
+                SearchCodeItem(name = "README.md", path = "2026/01/02/README.md", sha = "sha-1"),
+                SearchCodeItem(name = "README.md", path = "2026/01/05/README.md", sha = "sha-2"),
+                SearchCodeItem(name = "README.md", path = "2025/12/31/README.md", sha = "sha-3"),
+            ),
+        )
+        val client = SearchFakeGitHubClient(searchResponse = response)
+        val repository = SearchRepository(client, settingRepo)
+
+        // when
+        val result = repository.search("query")
+
+        // then
+        assert(result.items.map { it.path } == listOf(
+            "2026/01/05/README.md",
+            "2026/01/02/README.md",
+            "2025/12/31/README.md",
+        ))
+    }
+
+    @Test
     fun `search computes hasMore correctly`() = runTest {
         // given
         val settingRepo = SearchFakeSettingRepository(

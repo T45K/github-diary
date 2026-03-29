@@ -22,7 +22,7 @@ open class SearchRepository(
                 date = parseDateFromPath(item.path),
                 fragments = item.textMatches.map { it.fragment },
             )
-        }
+        }.sortedWith(compareByDescending<SearchResultEntry> { it.date }.thenByDescending { it.path })
         return SearchResult(
             totalCount = response.totalCount,
             items = entries,
