@@ -31,9 +31,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -65,14 +62,7 @@ fun GoalEditScreen(
     updateBackMoney: (amount: Int) -> Unit,
     save: () -> Unit,
 ) {
-    val canSave by remember {
-        derivedStateOf {
-            when (uiState) {
-                is GoalEditUiState.Editing -> !uiState.isSaving
-                else -> false
-            }
-        }
-    }
+    val canSave = uiState.canSave()
 
     Scaffold(
         modifier = Modifier.onPreviewKeyEvent { event ->
@@ -244,3 +234,6 @@ fun GoalEditScreen(
         }
     }
 }
+
+internal fun GoalEditUiState.canSave(): Boolean =
+    this is GoalEditUiState.Editing && !isSaving
