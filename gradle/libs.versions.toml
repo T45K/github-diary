@@ -19,7 +19,7 @@ arrow = "2.2.3"
 koin = "4.2.2"
 junit = "6.1.2"
 coroutines = "1.11.0"
-logback = "1.5.38"
+logback = "1.6.0"
 activityCompose = "1.13.0"
 jetbrainsMarkdown = "0.7.7"
 
